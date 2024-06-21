@@ -1,0 +1,13 @@
+io/dynamicstudios/commands/command/DynamicSubCommand.class
+io/dynamicstudios/commands/command/help/DefaultHelpPage.class
+io/dynamicstudios/commands/util/CommandException.class
+io/dynamicstudios/commands/command/DynamicCommand.class
+io/dynamicstudios/commands/command/argument/DynamicArgument.class
+io/dynamicstudios/commands/command/annotation/DynamicCommand.class
+io/dynamicstudios/commands/command/DynamicCommand$1.class
+io/dynamicstudios/commands/util/ClassFinder.class
+io/dynamicstudios/commands/command/argument/DynamicArguments.class
+io/dynamicstudios/commands/command/help/HelpPage.class
+io/dynamicstudios/commands/command/annotation/DynamicArgument.class
+io/dynamicstudios/commands/DynamicCommandManager.class
+io/dynamicstudios/commands/util/StringMatcher.class
