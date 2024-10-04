@@ -76,4 +76,13 @@ public abstract class DynamicSubCommand<C extends DynamicCommand> {
   public abstract boolean execute(CommandSender s, String label, DynamicArguments args) throws CommandException;
 
   public List<String> executeTab(CommandSender sender, String label, DynamicArguments args){return new ArrayList<>();}
+
+  @Override
+  public String toString() {
+    return "DynamicSubCommand{" +
+       "command=" + command +
+       ", rawArguments=" + Arrays.toString(rawArguments) +
+       ", arguments=" + arguments +
+       '}';
+  }
 }

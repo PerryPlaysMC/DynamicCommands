@@ -1,9 +1,9 @@
 package io.dynamicstudios.commands.command.help;
 
-import dev.dynamicstudios.json.DynamicJText;
 import io.dynamicstudios.commands.DynamicCommandManager;
 import io.dynamicstudios.commands.command.DynamicCommand;
 import io.dynamicstudios.commands.command.DynamicSubCommand;
+import io.dynamicstudios.json.DynamicJText;
 
 import java.util.ArrayList;
 import java.util.Collections;

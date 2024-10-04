@@ -1,22 +1,33 @@
 package io.dynamicstudios.commands.command.argument;
 
 import io.dynamicstudios.commands.DynamicCommandManager;
+import io.dynamicstudios.commands.command.argument.types.DynamicLiteral;
+import io.dynamicstudios.commands.command.argument.types.DynamicLocationArgument;
+import io.dynamicstudios.commands.command.argument.types.DynamicObjectArgument;
 import io.dynamicstudios.commands.exceptions.CommandException;
+import io.dynamicstudios.commands.exceptions.brigadier.CommandSyntaxException;
 import org.bukkit.command.CommandSender;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Creator: PerryPlaysMC
  * Created: 09/2022
  **/
-public class DynamicArgument<T> {
+public abstract class DynamicArgument<T> {
 
   private final String name, description;
-  private final DynamicArgument<?>[] subArguments;
+  protected final List<DynamicArgument<?>> subArguments;
   private String[] aliases;
+  private List<String> availableNames;
   private final Class<T> type;
   private String input;
+	private int span = 1;
+	Supplier<Collection<String>> suggestions;
 
   public DynamicArgument(String name, String description, DynamicArgument<?>... subArguments) {
     this(null, name, description, subArguments);
@@ -31,19 +42,42 @@ public class DynamicArgument<T> {
 	  this.type = (clazz!=null&&clazz.getName().equalsIgnoreCase(Object.class.getName())) ? (Class<T>) String.class : (type == null ? clazz : type);
     this.name = name;
     this.description = description;
-    this.subArguments = subArguments;
+    this.subArguments = new ArrayList<>(Arrays.asList(subArguments));
     this.aliases = null;
+		this.availableNames = new ArrayList<>();
+		availableNames.add(name);
   }
 
-	public boolean execute(CommandSender sender, T self, DynamicArguments args) throws CommandException {
-		if(args.inputs().length == 0) return false;
-		for(DynamicArgument argument : subArguments) {
-			if(argument.name().equalsIgnoreCase(args.inputs()[0]) || checkAliases(args.inputs()[0]) || (argument.name().matches("([\\[<]).+([]>])") && argument.isValid())) {
-				argument.input(args.inputs()[0]);
-				return argument.execute(sender, argument.parse(), new DynamicArguments(argument.subArguments(), Arrays.copyOfRange(args.inputs(), 1, args.inputs().length)));
-			}
-		}
-		return false;
+	public int span() {
+		return span;
+	}
+
+	protected DynamicArgument<T> span(int span) {
+		this.span = span;
+		return this;
+	}
+
+	public List<String> availableNames() {
+		return availableNames;
+	}
+
+	public static DynamicLiteral literal(String name, String description) {
+		return DynamicLiteral.of(name, description);
+	}
+
+	public static <T> DynamicObjectArgument<T> object(Class<T> type, String name, String description) {
+		return DynamicObjectArgument.of(type, name, description);
+	}
+
+	public static DynamicObjectArgument<String> object(String name, String description) {
+		return DynamicObjectArgument.of(String.class, name, description);
+	}
+	public static DynamicLocationArgument location(String name, String description) {
+		return DynamicLocationArgument.of(name, description);
+	}
+
+	public List<String> suggestions() {
+		return suggestions == null ? null : new ArrayList<>(suggestions.get());
 	}
 
 	private boolean checkAliases(String arg) {
@@ -63,15 +97,20 @@ public class DynamicArgument<T> {
   }
 
   public DynamicArgument<?>[] subArguments() {
-    return subArguments;
+    return subArguments.toArray(new DynamicArgument<?>[0]);
   }
 
   public DynamicArgument<T> aliases(String... aliases) {
     this.aliases = aliases;
+		availableNames.clear();
+		availableNames.add(name);
+		availableNames.addAll(Arrays.asList(aliases));
     return this;
   }
 
-	public T parse() throws CommandException {
+	public void brigadierValidate(String reader) throws CommandSyntaxException {}
+
+	public T parse(CommandSender sender) throws CommandException {
 		return DynamicCommandManager.parse(type,input());
 	}
 
@@ -97,7 +136,7 @@ public class DynamicArgument<T> {
 		return "DynamicArgument{" +
 			"name='" + name + '\'' +
 			", description='" + description + '\'' +
-			", subArguments=" + Arrays.toString(subArguments) +
+			", subArguments=" + subArguments +
 			", aliases=" + Arrays.toString(aliases) +
 			", type=" + type +
 			", input='" + input + '\'' +
@@ -108,7 +147,5 @@ public class DynamicArgument<T> {
 		return isValid(input());
 	}
 
-	public boolean isValid(String input) {
-		return DynamicCommandManager.canParse(type,input);
-	}
+	public abstract boolean isValid(String input);
 }

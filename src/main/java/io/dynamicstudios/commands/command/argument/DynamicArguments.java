@@ -1,6 +1,7 @@
 package io.dynamicstudios.commands.command.argument;
 
 import io.dynamicstudios.commands.exceptions.CommandException;
+import org.bukkit.command.CommandSender;
 
 import java.util.*;
 
@@ -11,31 +12,57 @@ import java.util.*;
 public class DynamicArguments implements Iterable<DynamicArgument<?>>{
 
 
+	private final CommandSender sender;
 	private final String[] inputs;
 	private List<DynamicArgument<?>> list;
 	private HashMap<String, String> arguments;
-  private HashMap<String, DynamicArgument<?>> key;
-  private HashMap<String, Class<?>> argumentTypes;
+	private HashMap<String, DynamicArgument<?>> key;
+	private HashMap<String, Class<?>> argumentTypes;
 
-  public DynamicArguments(DynamicArgument<?>[] arguments, String[] args) {
-	  this.inputs = args;
-	  this.arguments = new LinkedHashMap<>();
-    this.key = new LinkedHashMap<>();
+	public DynamicArguments(CommandSender sender, DynamicArgument<?>[] arguments, String[] args) {
+		this.sender = sender;
+		this.inputs = args;
+		this.arguments = new LinkedHashMap<>();
+		this.key = new LinkedHashMap<>();
 		this.list = Arrays.asList(arguments);
-    this.argumentTypes = new LinkedHashMap<>();
-	  for(int i = 0; i < Math.min(args.length,arguments.length); i++) {
-		  String arg = args[i];
-			DynamicArgument<?> argument = arguments[i];
-			argument.input(arg);
-			key.put(argument.name(), argument);
-      this.arguments.put(argument.name().toLowerCase(), arg);
-      this.argumentTypes.put(argument.name().toLowerCase(),argument.type());
-    }
-  }
+		this.argumentTypes = new LinkedHashMap<>();
+		for(DynamicArgument<?> argument : arguments) {
+			if(loadArguments(sender, argument, 0, args))break;
+		}
+	}
+
+	private boolean loadArguments(CommandSender sender, DynamicArgument<?> argument, int depth, String[] args) {
+		if(depth >= args.length) return false;
+		String arg = String.join(" ", Arrays.copyOfRange(args,depth, Math.min(depth+argument.span(), args.length)));
+		if(!argument.isValid(arg))return false;
+		argument.input(arg);
+		if(this.key.containsKey(argument.name().toLowerCase()) ||
+			this.arguments.containsKey(argument.name().toLowerCase()) ||
+			this.argumentTypes.containsKey(argument.name().toLowerCase())) {
+			int sub = 2;
+			while(this.key.containsKey(argument.name().toLowerCase() + sub) ||
+				this.arguments.containsKey(argument.name().toLowerCase() + sub) ||
+				this.argumentTypes.containsKey(argument.name().toLowerCase() + sub)) {
+				sub++;
+			}
+			this.key.put(argument.name().toLowerCase() + sub, argument);
+			this.arguments.put(argument.name().toLowerCase() + sub, arg);
+			this.argumentTypes.put(argument.name().toLowerCase() + sub,argument.type());
+		}
+		else {
+			this.key.put(argument.name().toLowerCase(), argument);
+			this.arguments.put(argument.name().toLowerCase(), arg);
+			this.argumentTypes.put(argument.name().toLowerCase(), argument.type());
+		}
+		for(DynamicArgument<?> dynamicArgument : argument.subArguments()) {
+			if(loadArguments(sender, dynamicArgument, depth + argument.span(), args))return true;
+		}
+		return true;
+	}
 
 	public DynamicArguments from(int index) {
 		DynamicArgument[] args = key.values().toArray(new DynamicArgument[0]);
-		return new DynamicArguments(Arrays.copyOfRange(args,index,args.length), Arrays.copyOfRange(this.inputs,index,this.inputs.length));
+		return new DynamicArguments(this.sender, Arrays.copyOfRange(args,index,args.length), Arrays.copyOfRange(this.inputs,index,this.inputs.length));
 	}
 
 	public String[] inputs() {
@@ -43,17 +70,17 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>>{
 	}
 
 	public boolean hasArgument(String name) {
-    return this.arguments.containsKey(name.toLowerCase());
-  }
+		return this.arguments.containsKey(name.toLowerCase()) && this.key.containsKey(name.toLowerCase());
+	}
 
 	public <T> T get(Class<T> type, String name) throws CommandException {
 		if(!argumentTypes.containsKey(name)||!argumentTypes.get(name).getName().equals(type.getName()))return null;
-		return type.cast(key.get(name).parse());
+		return type.cast(key.get(name).parse(sender));
 	}
 	public <T> T get(String name) throws CommandException {
-		if(!argumentTypes.containsKey(name))return null;
-		if(!key.containsKey(name))return null;
-		return (T) key.get(name).parse();
+		if(!argumentTypes.containsKey(name.toLowerCase()))return null;
+		if(!key.containsKey(name.toLowerCase()))return null;
+		return (T) key.get(name.toLowerCase()).parse(sender);
 	}
 	public DynamicArgument getArgument(String name) {
 		if(!argumentTypes.containsKey(name))return null;
@@ -86,5 +113,9 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>>{
 
 	public String[] names() {
 		return key.keySet().toArray(new String[0]);
+	}
+
+	public boolean has(String name) {
+		return hasArgument(name);
 	}
 }

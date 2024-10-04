@@ -1,6 +1,7 @@
 package io.dynamicstudios.commands.exceptions;
 
-import dev.dynamicstudios.json.data.util.CColor;
+
+import io.dynamicstudios.json.data.util.CColor;
 
 /**
  * Copy Right ©
