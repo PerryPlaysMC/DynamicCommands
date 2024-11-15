@@ -51,7 +51,7 @@ public abstract class DynamicCommand extends Command {
 			for(int i = 0; i < sub.rawArguments().length; i++) args[i] = sub.rawArguments()[i];
 			args[args.length-1] = DynamicArgumentBuilder.createLiteral("help", "Shows information about this command")
 				.add(DynamicArgument.object(Integer.class, "[page]","The page to view")).build().aliases("?");
-			DynamicSubCommand<?> cmd = new DynamicSubCommand<>(this, args) {
+			DynamicSubCommand<?> cmd = new DynamicSubCommand(this, args) {
 				@Override
 				public String name() {
 					return sub.name();

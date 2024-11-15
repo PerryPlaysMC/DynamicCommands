@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Creator: PerryPlaysMC
@@ -88,15 +89,15 @@ public class DynamicCommandManager {
 	private static final Map<Class<?>, Function<CommandSender, List<String>>> SENDER_SUGGESTIONS = new HashMap<>();
 
 	static {
-		suggestions(Player.class, () -> Bukkit.getOnlinePlayers().stream().map(Player::getName).toList());
-		suggestions(World.class, () -> Bukkit.getWorlds().stream().map(World::getName).toList());
-		suggestions(Enum.class, i -> Arrays.stream(i.getEnumConstants()).map(Enum::name).map(String::toLowerCase).toList());
+		suggestions(Player.class, () -> Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList()));
+		suggestions(World.class, () -> Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()));
+		suggestions(Enum.class, i -> Arrays.stream(i.getEnumConstants()).map(Enum::name).map(String::toLowerCase).collect(Collectors.toList()));
 		senderSuggestions(Location.class, p -> {
 			if(p instanceof Player) {
 				Location location = ((Player) p).getLocation();
-				return List.of(Math.round(location.getX()) + " " + Math.round(location.getY()) + " " + Math.round(location.getZ()));
+				return Collections.singletonList(Math.round(location.getX()) + " " + Math.round(location.getY()) + " " + Math.round(location.getZ()));
 			}
-			return List.of();
+			return Collections.emptyList();
 		});
 	}
 

@@ -12,6 +12,7 @@ io/dynamicstudios/commands/command/DynamicCommand.class
 io/dynamicstudios/commands/command/annotation/OptionalArgument.class
 io/dynamicstudios/commands/command/node/CommandSourceWrapper.class
 io/dynamicstudios/commands/exceptions/CommandNotImplementedException.class
+io/dynamicstudios/commands/brigadier/BrigadierTypes.class
 io/dynamicstudios/commands/exceptions/brigadier/Dynamic2CommandExceptionType.class
 io/dynamicstudios/commands/exceptions/brigadier/Dynamic2CommandExceptionType$Function.class
 io/dynamicstudios/commands/command/node/CommandNode.class
