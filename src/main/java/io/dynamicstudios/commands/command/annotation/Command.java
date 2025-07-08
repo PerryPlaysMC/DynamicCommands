@@ -13,21 +13,21 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 public @interface Command {
 
-  String name();
+	String name();
 
-  String[] aliases() default "";
+	String[] aliases() default "";
 
-  String description() default "";
+	String description() default "";
 
-  String usage() default "";
+	String usage() default "";
 
-  String permission() default "";
+	String permission() default "";
 
-  String permissionMessage() default "";
+	String permissionMessage() default "";
 
-  boolean playerOnly() default false;
+	boolean playerOnly() default false;
 
-  boolean consoleOnly() default false;
+	boolean consoleOnly() default false;
 
 
 }

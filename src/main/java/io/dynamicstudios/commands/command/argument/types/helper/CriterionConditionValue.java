@@ -1,11 +1,5 @@
 package io.dynamicstudios.commands.command.argument.types.helper;
 
-import io.dynamicstudios.commands.exceptions.brigadier.SimpleCommandExceptionType;
-import io.dynamicstudios.json.data.component.IComponent;
-import io.dynamicstudios.json.data.util.Translation;
-
-import java.util.Optional;
-
 public interface CriterionConditionValue<T extends Number> {
 //  SimpleCommandExceptionType ERROR_EMPTY = new SimpleCommandExceptionType(() -> IComponent.translationComponent(Translation.byId("argument.range.empty")).json());
 //  SimpleCommandExceptionType ERROR_SWAPPED = new SimpleCommandExceptionType(() -> IComponent.translationComponent(Translation.byId("argument.range.swapped")).json());

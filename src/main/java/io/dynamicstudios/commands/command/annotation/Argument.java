@@ -5,7 +5,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.function.Predicate;
 
 /**
  * Creator: PerryPlaysMC
@@ -15,18 +14,18 @@ import java.util.function.Predicate;
 @Target({ElementType.METHOD})
 public @interface Argument {
 
-  String name();
+	String name();
 
 	String forArg() default "";
 
-  String[] aliases() default "";
+	String[] aliases() default "";
 
-  String description() default "";
+	String description() default "";
 
-  String usage() default "";
+	String usage() default "";
 
-  String permission() default "";
+	String permission() default "";
 
-  boolean playerOnly() default false;
+	boolean playerOnly() default false;
 
 }

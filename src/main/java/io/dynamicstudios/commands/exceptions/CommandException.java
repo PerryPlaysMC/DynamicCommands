@@ -11,8 +11,8 @@ import io.dynamicstudios.json.data.util.CColor;
  **/
 public class CommandException extends Exception {
 
-  public CommandException(String text) {
-    super(CColor.translateCommon(text));
-  }
+	public CommandException(String text) {
+		super(CColor.translateCommon(text));
+	}
 
 }

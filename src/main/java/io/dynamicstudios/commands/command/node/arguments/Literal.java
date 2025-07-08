@@ -23,7 +23,6 @@ public class Literal<Source> implements NodeArgument<Source> {
 	}
 
 
-
 	@Override
 	public NodeArgument then(NodeArgument argument) {
 		arguments.add(argument);

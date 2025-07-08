@@ -1,17 +1,17 @@
 package io.dynamicstudios.commands.exceptions.brigadier;
 
 public class LiteralMessage implements Message {
-  private final String string;
+	private final String string;
 
-  public LiteralMessage(String string) {
-    this.string = string;
-  }
+	public LiteralMessage(String string) {
+		this.string = string;
+	}
 
-  public String getString() {
-    return this.string;
-  }
+	public String getString() {
+		return this.string;
+	}
 
-  public String toString() {
-    return this.string;
-  }
+	public String toString() {
+		return this.string;
+	}
 }

@@ -1,57 +1,57 @@
 package io.dynamicstudios.commands.exceptions.brigadier;
 
 public interface BuiltInExceptionProvider {
-  Dynamic2CommandExceptionType doubleTooLow();
+	Dynamic2CommandExceptionType doubleTooLow();
 
-  Dynamic2CommandExceptionType doubleTooHigh();
+	Dynamic2CommandExceptionType doubleTooHigh();
 
-  Dynamic2CommandExceptionType floatTooLow();
+	Dynamic2CommandExceptionType floatTooLow();
 
-  Dynamic2CommandExceptionType floatTooHigh();
+	Dynamic2CommandExceptionType floatTooHigh();
 
-  Dynamic2CommandExceptionType integerTooLow();
+	Dynamic2CommandExceptionType integerTooLow();
 
-  Dynamic2CommandExceptionType integerTooHigh();
+	Dynamic2CommandExceptionType integerTooHigh();
 
-  Dynamic2CommandExceptionType longTooLow();
+	Dynamic2CommandExceptionType longTooLow();
 
-  Dynamic2CommandExceptionType longTooHigh();
+	Dynamic2CommandExceptionType longTooHigh();
 
-  DynamicCommandExceptionType literalIncorrect();
+	DynamicCommandExceptionType literalIncorrect();
 
-  SimpleCommandExceptionType readerExpectedStartOfQuote();
+	SimpleCommandExceptionType readerExpectedStartOfQuote();
 
-  SimpleCommandExceptionType readerExpectedEndOfQuote();
+	SimpleCommandExceptionType readerExpectedEndOfQuote();
 
-  DynamicCommandExceptionType readerInvalidEscape();
+	DynamicCommandExceptionType readerInvalidEscape();
 
-  DynamicCommandExceptionType readerInvalidBool();
+	DynamicCommandExceptionType readerInvalidBool();
 
-  DynamicCommandExceptionType readerInvalidInt();
+	DynamicCommandExceptionType readerInvalidInt();
 
-  SimpleCommandExceptionType readerExpectedInt();
+	SimpleCommandExceptionType readerExpectedInt();
 
-  DynamicCommandExceptionType readerInvalidLong();
+	DynamicCommandExceptionType readerInvalidLong();
 
-  SimpleCommandExceptionType readerExpectedLong();
+	SimpleCommandExceptionType readerExpectedLong();
 
-  DynamicCommandExceptionType readerInvalidDouble();
+	DynamicCommandExceptionType readerInvalidDouble();
 
-  SimpleCommandExceptionType readerExpectedDouble();
+	SimpleCommandExceptionType readerExpectedDouble();
 
-  DynamicCommandExceptionType readerInvalidFloat();
+	DynamicCommandExceptionType readerInvalidFloat();
 
-  SimpleCommandExceptionType readerExpectedFloat();
+	SimpleCommandExceptionType readerExpectedFloat();
 
-  SimpleCommandExceptionType readerExpectedBool();
+	SimpleCommandExceptionType readerExpectedBool();
 
-  DynamicCommandExceptionType readerExpectedSymbol();
+	DynamicCommandExceptionType readerExpectedSymbol();
 
-  SimpleCommandExceptionType dispatcherUnknownCommand();
+	SimpleCommandExceptionType dispatcherUnknownCommand();
 
-  SimpleCommandExceptionType dispatcherUnknownArgument();
+	SimpleCommandExceptionType dispatcherUnknownArgument();
 
-  SimpleCommandExceptionType dispatcherExpectedArgumentSeparator();
+	SimpleCommandExceptionType dispatcherExpectedArgumentSeparator();
 
-  DynamicCommandExceptionType dispatcherParseException();
+	DynamicCommandExceptionType dispatcherParseException();
 }
