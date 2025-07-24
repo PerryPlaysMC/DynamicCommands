@@ -6,11 +6,11 @@ import java.util.List;
 
 public interface SuggestionProvider {
 
-	List<String> suggests();
+ List<String> suggests();
 
-	<T> List<String> suggests(Class<T> input);
+ <T> List<String> suggests(Class<T> input);
 
-	List<String> suggests(CommandSender sender);
+ List<String> suggests(CommandSender sender);
 
 
 }

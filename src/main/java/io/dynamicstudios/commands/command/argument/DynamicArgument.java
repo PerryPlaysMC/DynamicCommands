@@ -3,13 +3,14 @@ package io.dynamicstudios.commands.command.argument;
 import io.dynamicstudios.commands.DynamicCommandManager;
 import io.dynamicstudios.commands.command.argument.types.*;
 import io.dynamicstudios.commands.exceptions.CommandException;
-import io.dynamicstudios.commands.exceptions.brigadier.CommandSyntaxException;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -19,14 +20,21 @@ import java.util.function.Supplier;
 public abstract class DynamicArgument<T> {
 
  private final String name, description;
+ private String helpDescription;
  private DynamicArgument parent;
  protected final List<DynamicArgument<?>> subArguments;
  private String[] aliases;
- private List<String> availableNames;
+ private final List<String> availableNames;
  private final Class<T> type;
- private String input;
  private int span = 1;
- Supplier<Collection<String>> suggestions;
+ private Supplier<Collection<String>> suggestions;
+ private Function<CommandSender, Collection<String>> senderSuggestions;
+ private ArgumentExecutor executor = null;
+ public boolean retains = false;
+ public boolean required = false;
+ public boolean optional = true;
+ private ArgumentPredicate predicate = (s, arg) -> {
+ };
 
  public DynamicArgument(String name, String description, DynamicArgument<?>... subArguments) {
 	this(null, name, description, subArguments);
@@ -51,6 +59,16 @@ public abstract class DynamicArgument<T> {
 	return parent;
  }
 
+ public DynamicArgument parent(Predicate<DynamicArgument<?>> predicate) {
+	DynamicArgument parent = this.parent;
+	 if(parent == null || predicate.test(parent)) return parent;
+	while(parent != null) {
+	 if(parent.parent == null || predicate.test(parent.parent)) return parent.parent;
+	 parent = parent.parent;
+	}
+	return parent;
+ }
+
  public void parent(DynamicArgument parent) {
 	this.parent = parent;
  }
@@ -70,6 +88,26 @@ public abstract class DynamicArgument<T> {
 
  public static DynamicLiteral literal(String name, String description) {
 	return DynamicLiteral.of(name, description);
+ }
+
+ public static DynamicStringArgument limited(String name, String description, int length) {
+	return (DynamicStringArgument) DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.LIMITED).span(length);
+ }
+
+ public static DynamicStringArgument greedy(String name, String description) {
+	return DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.GREEDY);
+ }
+
+ public static DynamicStringArgument word(String name, String description) {
+	return DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.WORD);
+ }
+
+ public static DynamicStringArgument single(String name, String description) {
+	return DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.SINGLE);
+ }
+
+ public static DynamicStringArgument limited(String name, String description) {
+	return DynamicStringArgument.of(name, description);
  }
 
  //<editor-fold desc="Integer Arguments">
@@ -152,8 +190,69 @@ public abstract class DynamicArgument<T> {
 	return DynamicLocationArgument.of(name, description);
  }
 
+ public ArgumentPredicate predicate() {
+	return predicate == null ? (s, arg) -> {
+	} : predicate;
+ }
+
  public List<String> suggestions() {
 	return suggestions == null ? null : new ArrayList<>(suggestions.get());
+ }
+
+ public List<String> suggestions(CommandSender sender) {
+	return senderSuggestions == null ? null : new ArrayList<>(senderSuggestions.apply(sender));
+ }
+
+ public ArgumentExecutor executes() {
+	return executor;
+ }
+
+ public boolean retains() {
+	return retains;
+ }
+
+ public boolean required() {
+	return required;
+ }
+
+ public boolean isOptional() {
+	return optional;
+ }
+
+ public DynamicArgument<T> suggestions(Supplier<Collection<String>> suggestions) {
+	this.suggestions = suggestions;
+	return this;
+ }
+
+ public DynamicArgument<T> suggestions(Function<CommandSender, Collection<String>> senderSuggestions) {
+	this.senderSuggestions = senderSuggestions;
+	return this;
+ }
+
+ public DynamicArgument<T> predicate(ArgumentPredicate predicate) {
+	this.predicate = predicate;
+	return this;
+ }
+
+ public DynamicArgument<T> executes(ArgumentExecutor executor) {
+	this.executor = executor;
+	required = true;
+	return this;
+ }
+
+ public DynamicArgument<T> retains(boolean retains) {
+	this.retains = retains;
+	return this;
+ }
+
+ public DynamicArgument<T> required(boolean required) {
+	this.required = required;
+	return this;
+ }
+
+ public DynamicArgument<T> optional(boolean optional) {
+	this.optional = optional;
+	return this;
  }
 
  private boolean checkAliases(String arg) {
@@ -162,14 +261,6 @@ public abstract class DynamicArgument<T> {
 	 if(alias.equalsIgnoreCase(arg)) return true;
 	}
 	return false;
- }
-
- public String input() {
-	return input == null ? "" : input;
- }
-
- protected void input(String text) {
-	this.input = text;
  }
 
  public DynamicArgument<?>[] subArguments() {
@@ -184,11 +275,17 @@ public abstract class DynamicArgument<T> {
 	return this;
  }
 
- public void brigadierValidate(String reader) throws CommandSyntaxException {
+ public String helpDescription() {
+	return helpDescription;
  }
 
- public T parse(CommandSender sender) throws CommandException {
-	return DynamicCommandManager.parse(type, input());
+ public DynamicArgument<T> helpDescription(String helpDescription) {
+	this.helpDescription = helpDescription;
+	return this;
+ }
+
+ public T parse(CommandSender sender, String input) throws CommandException {
+	return DynamicCommandManager.parse(type, input);
  }
 
  public Class<?> type() {
@@ -216,13 +313,16 @@ public abstract class DynamicArgument<T> {
 		 ", subArguments=" + subArguments +
 		 ", aliases=" + Arrays.toString(aliases) +
 		 ", type=" + type +
-		 ", input='" + input + '\'' +
 		 '}';
  }
 
- public boolean isValid() {
-	return isValid(input());
- }
-
  public abstract boolean isValid(String input);
+
+ public int length() {
+	int length = subArguments.size();
+	for(DynamicArgument<?> subArgument : subArguments) {
+	 length+=subArgument.length();
+	}
+	return length;
+ }
 }

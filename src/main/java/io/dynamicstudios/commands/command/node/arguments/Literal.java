@@ -13,24 +13,24 @@ import java.util.List;
 public class Literal<Source> implements NodeArgument<Source> {
 
 
-	private String name;
+ private final String name;
 
-	private List<NodeArgument> arguments;
+ private final List<NodeArgument> arguments;
 
-	public Literal(String name) {
-		this.name = name;
-		this.arguments = new ArrayList<>();
-	}
+ public Literal(String name) {
+	this.name = name;
+	this.arguments = new ArrayList<>();
+ }
 
 
-	@Override
-	public NodeArgument then(NodeArgument argument) {
-		arguments.add(argument);
-		return this;
-	}
+ @Override
+ public NodeArgument then(NodeArgument argument) {
+	arguments.add(argument);
+	return this;
+ }
 
-	@Override
-	public int executes(CommandContext<Source> context) {
-		return 0;
-	}
+ @Override
+ public int executes(CommandContext<Source> context) {
+	return 0;
+ }
 }

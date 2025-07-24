@@ -30,7 +30,7 @@ package io.dynamicstudios.commands.brigadier.registration;
  */
 public final class BrigadierUnsupportedException extends UnsupportedOperationException {
 
-    BrigadierUnsupportedException(String message) {
-        super(message);
-    }
+ BrigadierUnsupportedException(String message) {
+	super(message);
+ }
 }

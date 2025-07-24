@@ -34,71 +34,71 @@ import java.util.function.Function;
  * Factory for obtaining instances of {@link Brigadier}.
  */
 public final class BrigadierProvider {
-    private BrigadierProvider() {
-        throw new AssertionError();
-    }
+ private BrigadierProvider() {
+	throw new AssertionError();
+ }
 
-    private static final Function<Plugin, Brigadier> PROVIDER = checkSupported();
+ private static final Function<Plugin, Brigadier> PROVIDER = checkSupported();
 
-    private static Function<Plugin, Brigadier> checkSupported() {
-        try {
-            Class.forName("com.mojang.brigadier.CommandDispatcher");
-        } catch (Throwable e) {
-            printDebugInfo(e);
-            return null;
-        }
+ private static Function<Plugin, Brigadier> checkSupported() {
+	try {
+	 Class.forName("com.mojang.brigadier.CommandDispatcher");
+	} catch(Throwable e) {
+	 printDebugInfo(e);
+	 return null;
+	}
 
-        // try the paper impl
-        try {
-            PaperBrigadier.ensureSetup();
-            return PaperBrigadier::new;
-        } catch (Throwable e) {
-            printDebugInfo(e);
-        }
+	// try the paper impl
+	try {
+	 PaperBrigadier.ensureSetup();
+	 return PaperBrigadier::new;
+	} catch(Throwable e) {
+	 printDebugInfo(e);
+	}
 
-        // try reflection impl
-        try {
-            ReflectionBrigadier.ensureSetup();
-            return ReflectionBrigadier::new;
-        } catch (Throwable e) {
-            printDebugInfo(e);
-        }
+	// try reflection impl
+	try {
+	 ReflectionBrigadier.ensureSetup();
+	 return ReflectionBrigadier::new;
+	} catch(Throwable e) {
+	 printDebugInfo(e);
+	}
 
-        return null;
-    }
+	return null;
+ }
 
-    private static void printDebugInfo(Throwable e) {
-        if (System.getProperty("Brigadier.debug") != null) {
-            System.err.println("Exception while initialising Brigadier:");
-            e.printStackTrace(System.err);
-        }
-    }
+ private static void printDebugInfo(Throwable e) {
+	if(System.getProperty("Brigadier.debug") != null) {
+	 System.err.println("Exception while initialising Brigadier:");
+	 e.printStackTrace(System.err);
+	}
+ }
 
-    /**
-     * Checks to see if the Brigadier command system is supported by the server.
-     *
-     * @return true if Brigadier is supported.
-     */
-    public static boolean isSupported() {
-        return PROVIDER != null;
-    }
+ /**
+	* Checks to see if the Brigadier command system is supported by the server.
+	*
+	* @return true if Brigadier is supported.
+	*/
+ public static boolean isSupported() {
+	return PROVIDER != null;
+ }
 
-    /**
-     * Obtains a {@link Brigadier} instance for the given plugin.
-     *
-     * @param plugin the plugin
-     * @return the Brigadier instance
-     * @throws BrigadierUnsupportedException if brigadier is not {@link #isSupported() supported}
-     * by the server.
-     */
-    public static Brigadier getBrigadier(Plugin plugin) throws BrigadierUnsupportedException {
-        Objects.requireNonNull(plugin, "plugin");
-        if (PROVIDER == null) {
-            throw new BrigadierUnsupportedException(
-                    "Brigadier is not supported by the server. " +
-                    "Set -DBrigadier.debug=true for debug info."
-            );
-        }
-        return PROVIDER.apply(plugin);
-    }
+ /**
+	* Obtains a {@link Brigadier} instance for the given plugin.
+	*
+	* @param plugin the plugin
+	* @return the Brigadier instance
+	* @throws BrigadierUnsupportedException if brigadier is not {@link #isSupported() supported}
+	*                                       by the server.
+	*/
+ public static Brigadier getBrigadier(Plugin plugin) throws BrigadierUnsupportedException {
+	Objects.requireNonNull(plugin, "plugin");
+	if(PROVIDER == null) {
+	 throw new BrigadierUnsupportedException(
+			"Brigadier is not supported by the server. " +
+				 "Set -DBrigadier.debug=true for debug info."
+	 );
+	}
+	return PROVIDER.apply(plugin);
+ }
 }

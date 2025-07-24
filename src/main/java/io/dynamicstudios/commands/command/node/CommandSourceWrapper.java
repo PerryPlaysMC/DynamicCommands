@@ -9,18 +9,18 @@ import org.bukkit.entity.Player;
  **/
 public class CommandSourceWrapper<Source extends Entity> {
 
-	private Source source;
+ private final Source source;
 
-	public CommandSourceWrapper(Source source) {
-		this.source = source;
-	}
+ public CommandSourceWrapper(Source source) {
+	this.source = source;
+ }
 
-	public boolean isOp() {
-		return source.isOp();
-	}
+ public boolean isOp() {
+	return source.isOp();
+ }
 
-	public boolean isPlayer() {
-		return source instanceof Player;
-	}
+ public boolean isPlayer() {
+	return source instanceof Player;
+ }
 
 }

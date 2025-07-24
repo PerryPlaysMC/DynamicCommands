@@ -2,13 +2,15 @@ package io.dynamicstudios.commands.command.help;
 
 import io.dynamicstudios.commands.DynamicCommandManager;
 import io.dynamicstudios.commands.command.DynamicCommand;
-import io.dynamicstudios.commands.command.DynamicSubCommand;
+import io.dynamicstudios.commands.command.argument.DynamicArgument;
+import io.dynamicstudios.commands.exceptions.CommandException;
 import io.dynamicstudios.json.DynamicJText;
+import io.dynamicstudios.json.data.component.IComponent;
+import io.dynamicstudios.json.data.util.CColor;
+import org.bukkit.command.CommandSender;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Creator: PerryPlaysMC
@@ -16,35 +18,44 @@ import java.util.Map;
  **/
 public class DefaultHelpPage extends HelpPage {
 
-
-	public DynamicJText help(DynamicSubCommand<?> command, int page) {
-		DynamicCommand parent = command.parent();
-		Map<String, String> args = command.arguments();
-		List<String> subCommand = new ArrayList<>(args.keySet());
-		List<List<String>> pages = splitList(subCommand, DynamicCommandManager.COMMANDS_PER_PAGE);
-		Collections.sort(subCommand);
-		page = page >= pages.size() ? pages.size() - 1 : (Math.max(page, 0));
-		String commandName = parent.getName();
-		DynamicJText msg = new DynamicJText("\n\n\n\n\n")
-			 .add("[c]Showing help for /[i]" + commandName + " [r]" + command.name()).suggest("/" + commandName + " " + command.name());
-		msg.add("\n[c]Page [i]" + (page + 1) + "[c]/[i]" + pages.size());
-		msg.add("\n[c]&l&m---------------------&r");
-		String aliases = "none";
-		if (!command.aliases().isEmpty()) aliases = String.join("[c], [i]", command.aliases());
-		msg.add("\n[c]Aliases: [i]" + aliases);
-		List<String> commandsToDisplay = subCommand.subList(page * 5, Math.min((page * 5) + 5, subCommand.size()));
-		for (String name : commandsToDisplay) {
-			String info = args.get(name);
-			msg.add("\n  [c]-/[i]")
-				 .add(parent.getName() + "[r] " + command.name() + " " + DynamicCommand.colorize(name))
-				 .suggest("/" + commandName + " " + command.name() + " " + DynamicCommand.colorize(name, "", ""))
-				 .hover("[c]Info:",
-						"[c] - [i]" + info,
-						"[c]Click to insert:",
-						"/[i]" + commandName + " [r]" + command.name() + " " + DynamicCommand.colorize(name));
-		}
-		msg.add("\n[c]&l&m---------------------");
-		return msg;
+ public void help(CommandSender sender, DynamicCommand command, int page) {
+	List<Map.Entry<String, String>> subCommand = new ArrayList<>();
+	DynamicArgument<?>[] arr = Arrays.stream(command.rawArguments()).filter(c-> {
+	 try {
+		c.predicate().test(sender, c.name());
+		return true;
+	 } catch(CommandException e) {
+		return false;
+	 }
+	}).collect(Collectors.toList()).toArray(new DynamicArgument[0]);
+	LinkedHashSet<Map.Entry<String, String>> entries = new LinkedHashSet<>(command.generateMap(sender, arr).entrySet());
+	Map.Entry<String, String> prev = null;
+	for(Map.Entry<String,String> argument : entries) {
+	 int addIndex = prev == null ? 0 : (argument.getValue().startsWith(prev.getValue()) && prev.getValue().trim().split(" ").length < argument.getValue().trim().split(" ").length ? 1 : 0);
+	 subCommand.add(addIndex,argument);
+	 prev = argument;
 	}
+	int pageSize = DynamicCommandManager.COMMANDS_PER_PAGE;
+	List<List<Map.Entry<String, String>>> pages = splitList(subCommand, pageSize);
+	page = page >= pages.size() ? pages.size() - 1 : (Math.max(page, 0));
+	String commandName = command.getName();
+	String aliases = "none";
+	if(!command.aliases().isEmpty()) aliases = String.join("[c], [i]", command.aliases());
+
+	DynamicJText msg = new DynamicJText("\n\n\n\n\n")
+		 .add("[c]Showing help for /[i]" + commandName).suggest("/" + commandName);
+	msg.add("\n[c]Aliases: [i]" + aliases);
+	msg.add("\n[c]Page [i]" + (page + 1) + "[c]/[i]" + pages.size());
+	msg.add("\n[c]&l&m---------------------&r");
+	List<Map.Entry<String, String>> commandsToDisplay = subCommand.subList(page * pageSize, Math.min((page * pageSize) + pageSize, subCommand.size()));
+	for(Map.Entry<String, String> name : commandsToDisplay) {
+	 DynamicJText text = DynamicJText.parseText(name.getKey());
+	 msg.add("\n [c]/[i]")
+			.add(IComponent.textComponent(CColor.translateCommon(commandName + "[c] ")).add(text))
+	 ;
+	}
+	msg.add("\n[c]&l&m---------------------");
+	msg.send(sender);
+ }
 
 }

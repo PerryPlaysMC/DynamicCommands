@@ -6,7 +6,7 @@ package io.dynamicstudios.commands.exceptions;
  **/
 public class CommandNotImplementedException extends CommandException {
 
-	public CommandNotImplementedException() {
-		super("This command was not implemented");
-	}
+ public CommandNotImplementedException() {
+	super("This command was not implemented");
+ }
 }

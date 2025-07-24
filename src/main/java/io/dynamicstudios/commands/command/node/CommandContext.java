@@ -8,12 +8,12 @@ import java.util.Map;
  **/
 public class CommandContext<Source> {
 
-	private Map<String, Object> arguments;
+ private Map<String, Object> arguments;
 
-	public CommandContext(Source source, NodeArgument node, String arguments) {
-		String[] args = arguments.split(" ");
+ public CommandContext(Source source, NodeArgument node, String arguments) {
+	String[] args = arguments.split(" ");
 
-	}
+ }
 
 
 }

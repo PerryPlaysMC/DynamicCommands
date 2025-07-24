@@ -1,8 +1,6 @@
 package io.dynamicstudios.commands.exceptions;
 
 
-import io.dynamicstudios.json.data.util.CColor;
-
 /**
  * Copy Right ©
  * This code is private
@@ -11,8 +9,8 @@ import io.dynamicstudios.json.data.util.CColor;
  **/
 public class CommandException extends Exception {
 
-	public CommandException(String text) {
-		super(CColor.translateCommon(text));
-	}
+ public CommandException(String text) {
+	super(text);
+ }
 
 }

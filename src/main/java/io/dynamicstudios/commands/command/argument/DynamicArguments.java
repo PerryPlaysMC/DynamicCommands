@@ -1,5 +1,6 @@
 package io.dynamicstudios.commands.command.argument;
 
+import io.dynamicstudios.commands.command.argument.types.DynamicStringArgument;
 import io.dynamicstudios.commands.exceptions.CommandException;
 import org.bukkit.command.CommandSender;
 
@@ -14,10 +15,11 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 
  private final CommandSender sender;
  private final String[] inputs;
- private List<DynamicArgument<?>> list;
- private HashMap<String, String> arguments;
- private HashMap<String, DynamicArgument<?>> key;
- private HashMap<String, Class<?>> argumentTypes;
+ private final List<DynamicArgument<?>> list;
+ private final HashMap<String, String> arguments;
+ private final HashMap<String, DynamicArgument<?>> key;
+ private final HashMap<String, Class<?>> argumentTypes;
+ private final HashMap<String, Integer> argumentsSpan;
 
  public DynamicArguments(CommandSender sender, DynamicArgument<?>[] arguments, String[] args) {
 	this.sender = sender;
@@ -26,36 +28,79 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	this.key = new LinkedHashMap<>();
 	this.list = Arrays.asList(arguments);
 	this.argumentTypes = new LinkedHashMap<>();
+	this.argumentsSpan = new LinkedHashMap<>();
 	for(DynamicArgument<?> argument : arguments) {
 	 if(loadArguments(argument, 0, args)) break;
 	}
+//	for(DynamicArgument<?> argument : arguments)
+//	 System.out.println(printArgs(argument, 0));
+//	System.out.println(sender.getName());
+//	System.out.println("a");
+//	System.out.println(this.arguments);
+//	System.out.println(String.join(" ", args));
+ }
+
+ public String printArgs(DynamicArgument<?> argument, int indent) {
+	StringBuilder builder = new StringBuilder();
+//	builder.append("\n");
+	for(int i = 0; i < indent; i++) {
+		builder.append(" ");
+	}
+	builder.append(argument.name()).append(" ").append(argument.type().getSimpleName());
+	if(argument.subArguments.isEmpty()) {
+	 return builder.append(";").toString();
+	}
+	builder.append(" {");
+	for(DynamicArgument<?> subArgument : argument.subArguments) {
+	 builder.append("\n").append(printArgs(subArgument, indent + 1));
+	}
+	builder.append("\n");
+	for(int i = 0; i < indent; i++) {
+	 builder.append(" ");
+	}
+	builder.append("}");
+	return builder.toString();
  }
 
  private boolean loadArguments(DynamicArgument<?> argument, int depth, String[] args) {
-	if(depth >= args.length) return false;
-	String arg = String.join(" ", Arrays.copyOfRange(args, depth, Math.min(depth + argument.span(), args.length)));
-	if(!argument.isValid(arg) && ((argument.parent() == null && argument.subArguments.size() < 2) || argument.parent().subArguments.size() > 1))
+	if(depth > args.length) return false;
+	String arg = String.join(" ", Arrays.copyOfRange(args, depth, Math.min(Math.max(0, depth + (argument.span() == -1 ? 256 : argument.span())), args.length)));
+	int increase = 1;
+	if(argument.span() == 1 && argument instanceof DynamicStringArgument) {
+	 while(arg.startsWith("\"") && !arg.matches("^\\\"(?<data>(?:(?=\\\\\\\")..|(?!\\\").)*)\\\"$")) {
+		arg = String.join(" ", Arrays.copyOfRange(args, depth, Math.min(Math.max(0, depth + increase), args.length)));
+		if(arg.matches("^\\\"(?<data>(?:(?=\\\\\\\")..|(?!\\\").)*)\\\"$") || depth + increase > args.length) break;
+		increase++;
+	 }
+	}else increase = arg.split(" ").length;
+	if(!argument.isValid(arg))
 	 return false;
-	argument.input(arg);
-	if(this.key.containsKey(argument.name().toLowerCase()) ||
-		 this.arguments.containsKey(argument.name().toLowerCase()) ||
-		 this.argumentTypes.containsKey(argument.name().toLowerCase())) {
+	if(arg.isEmpty()) return false;
+	String lName = argument.name().toLowerCase();
+	int argSpan = increase;// arg.split(" ").length;
+	if(this.key.containsKey(lName) ||
+		 this.arguments.containsKey(lName) ||
+		 this.argumentTypes.containsKey(lName) ||
+		 this.argumentsSpan.containsKey(lName)) {
 	 int sub = 2;
-	 while(this.key.containsKey(argument.name().toLowerCase() + sub) ||
-			this.arguments.containsKey(argument.name().toLowerCase() + sub) ||
-			this.argumentTypes.containsKey(argument.name().toLowerCase() + sub)) {
+	 while(this.key.containsKey(lName + sub) ||
+			this.arguments.containsKey(lName + sub) ||
+			this.argumentTypes.containsKey(lName + sub) ||
+			this.argumentsSpan.containsKey(lName + sub)) {
 		sub++;
 	 }
-	 this.key.put(argument.name().toLowerCase() + sub, argument);
-	 this.arguments.put(argument.name().toLowerCase() + sub, arg);
-	 this.argumentTypes.put(argument.name().toLowerCase() + sub, argument.type());
+	 this.key.put(lName + sub, argument);
+	 this.arguments.put(lName + sub, arg);
+	 this.argumentTypes.put(lName + sub, argument.type());
+	 this.argumentsSpan.put(lName + sub, argSpan);
 	} else {
-	 this.key.put(argument.name().toLowerCase(), argument);
-	 this.arguments.put(argument.name().toLowerCase(), arg);
-	 this.argumentTypes.put(argument.name().toLowerCase(), argument.type());
+	 this.key.put(lName, argument);
+	 this.arguments.put(lName, arg);
+	 this.argumentTypes.put(lName, argument.type());
+	 this.argumentsSpan.put(lName, argSpan);
 	}
 	for(DynamicArgument<?> dynamicArgument : argument.subArguments()) {
-	 if(loadArguments(dynamicArgument, depth + argument.span(), args)) return true;
+	 if(loadArguments(dynamicArgument, depth + (argument.span() == -1 ? 256 : argSpan), args)) return true;
 	}
 	return true;
  }
@@ -69,19 +114,45 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	return inputs;
  }
 
+ public int getSpan(String name) {
+	return argumentsSpan.getOrDefault(name.toLowerCase(), 1);
+ }
+
  public boolean hasArgument(String name) {
 	return this.arguments.containsKey(name.toLowerCase()) && this.key.containsKey(name.toLowerCase());
  }
 
  public <T> T get(Class<T> type, String name) throws CommandException {
-	if(!argumentTypes.containsKey(name) || !argumentTypes.get(name).getName().equals(type.getName())) return null;
-	return type.cast(key.get(name).parse(sender));
+	return getOrDefault(type, name, null);
+ }
+
+
+ public <T> T getRequired(Class<T> type, String name) throws CommandException {
+	T orDefault = getOrDefault(type, name, null);
+	if(orDefault == null) throw new CommandException("Argument '" + name + "' is required.");
+	return orDefault;
+ }
+
+
+ public <T> T getOrDefault(Class<T> type, String name, T defaultValue) throws CommandException {
+	if(!argumentTypes.containsKey(name) || !argumentTypes.get(name).getName().equals(type.getName())) return defaultValue;
+	return type.cast(key.get(name).parse(sender, arguments.get(name.toLowerCase())));
+ }
+
+ public <T> T getRequired(String name) throws CommandException {
+	T orDefault = getOrDefault(name, null);
+	if(orDefault == null) throw new CommandException("Argument '" + name + "' is required.");
+	return orDefault;
  }
 
  public <T> T get(String name) throws CommandException {
-	if(!argumentTypes.containsKey(name.toLowerCase())) return null;
-	if(!key.containsKey(name.toLowerCase())) return null;
-	return (T) key.get(name.toLowerCase()).parse(sender);
+	return getOrDefault(name, null);
+ }
+
+ public <T> T getOrDefault(String name, T defaultValue) throws CommandException {
+	if(!argumentTypes.containsKey(name.toLowerCase())) return defaultValue;
+	if(!key.containsKey(name.toLowerCase())) return defaultValue;
+	return (T) key.get(name.toLowerCase()).parse(sender, arguments.get(name.toLowerCase()));
  }
 
  public DynamicArgument getArgument(String name) {
@@ -125,17 +196,26 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
  public void test(CommandSender sender, String[] args) throws CommandException {
 	int size = 0;
 	for(String name : names()) {
-	 if(!hasArgument(name))continue;
-	 DynamicArgument argument = getArgument(name);
-	 argument.parse(sender);
+	 if(!hasArgument(name)) continue;
+	 DynamicArgument<?> argument = getArgument(name);
+	 argument.predicate().test(sender, arguments.get(name.toLowerCase()));
+	 argument.parse(sender, arguments.get(name.toLowerCase()));
 	 if(size < Integer.MAX_VALUE)
-		size += argument.span();
+		size += (argument.span() == -1 ? 256 : getSpan(name));
 	 if(size == -1) {
 		size = Integer.MAX_VALUE;
 	 }
 	}
 	if(args.length > size) {
-	 throw new CommandException("Too many arguments: " + args[args.length - 1] + ", " + args.length + " max: " + size);
+	 throw new CommandException("Too many arguments: '" + String.join(" ", Arrays.copyOfRange(args, args.length - (args.length - size), args.length)) + "', " + args.length + " max: " + size);
 	}
+ }
+
+ public String getInput(String name) {
+	return arguments.get(name.toLowerCase());
+ }
+
+ public Map<String, DynamicArgument<?>> getArguments() {
+	return this.key;
  }
 }

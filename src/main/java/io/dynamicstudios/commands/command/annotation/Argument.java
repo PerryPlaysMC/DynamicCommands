@@ -14,18 +14,18 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 public @interface Argument {
 
-	String name();
+ String name();
 
-	String forArg() default "";
+ String forArg() default "";
 
-	String[] aliases() default "";
+ String[] aliases() default "";
 
-	String description() default "";
+ String description() default "";
 
-	String usage() default "";
+ String usage() default "";
 
-	String permission() default "";
+ String permission() default "";
 
-	boolean playerOnly() default false;
+ boolean playerOnly() default false;
 
 }

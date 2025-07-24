@@ -1,13 +1,16 @@
 package io.dynamicstudios.commands;
 
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.dynamicstudios.commands.brigadier.BrigadierTypes;
 import io.dynamicstudios.commands.brigadier.registration.ReflectionBrigadier;
 import io.dynamicstudios.commands.command.DynamicCommand;
+import io.dynamicstudios.commands.command.PluginReloadListener;
 import io.dynamicstudios.commands.command.annotation.Argument;
 import io.dynamicstudios.commands.command.annotation.Command;
 import io.dynamicstudios.commands.command.argument.DynamicArgument;
@@ -26,13 +29,16 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.SimplePluginManager;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,12 +48,26 @@ import java.util.stream.Stream;
  * Created: 08/2022
  **/
 public class DynamicCommandManager {
+ private static Map<String, Set<DynamicCommand>> REGISTERED_COMMANDS = new HashMap<>();
+
+ private static Set<Plugin> PLUGINS = new HashSet<>();
+
+ static {
+	CColor.registerColorTranslator((input) -> input
+		 .replace("[c]", "&7")
+		 .replace("[i]", "&5")
+		 .replace("[r]", "&6")
+		 .replace("[o]", "&e")
+		 .replace("[a]", "&d")
+	);
+ }
 
  public static String ERROR_MESSAGE = "Error: {command}";
- public static int COMMANDS_PER_PAGE = 5;
+ public static int COMMANDS_PER_PAGE = 10;
  public static HelpPage HELP_PAGE = new DefaultHelpPage();
+ private static final Map<String, ReflectionBrigadier> BRIGADIERS = new HashMap<>();
  private static SimpleCommandMap commandMap;
- private static Map<String, ReflectionBrigadier> brigadiers = new HashMap<>();
+ private static Field knownCommandsField;
 
  public static SimpleCommandMap getCommandMap() {
 	if(commandMap == null) {
@@ -56,6 +76,8 @@ public class DynamicCommandManager {
 		Field f = SimplePluginManager.class.getDeclaredField("commandMap");
 		f.setAccessible(true);
 		commandMap = (SimpleCommandMap) f.get(spm);
+		knownCommandsField = SimpleCommandMap.class.getDeclaredField("knownCommands");
+		knownCommandsField.setAccessible(true);
 	 } catch(Exception e) {
 		e.printStackTrace();
 	 }
@@ -63,33 +85,118 @@ public class DynamicCommandManager {
 	return commandMap;
  }
 
+ public static Map<String, Set<DynamicCommand>> commands() {
+	return REGISTERED_COMMANDS;
+ }
+
  public static void registerCommand(DynamicCommand command) {
 	registerCommand(command, true);
  }
 
  public static void registerCommand(DynamicCommand command, boolean useBrigadier) {
+	registerCommand(command.owner().getName(), command, useBrigadier);
+ }
+
+ public static void registerCommand(String fallback, DynamicCommand command) {
+	registerCommand(fallback, command, true);
+ }
+
+ public static void registerCommand(String fallbackPrefix, DynamicCommand command, boolean useBrigadier) {
 	SimpleCommandMap map = getCommandMap();
 	if(map == null) return;
-	map.register(command.owner().getName(), command);
-	if(!useBrigadier)return;
+	PLUGINS.removeIf(c -> c.getName().equalsIgnoreCase(command.owner().getName()) && !c.equals(command.owner()));
+	REGISTERED_COMMANDS.getOrDefault(fallbackPrefix, new HashSet<>()).removeIf(c -> c.getName().equalsIgnoreCase(command.getName()));
+	List<String> aliases = command.aliases();
+	for(String alias : aliases) {
+	 unregisterCommand(map, fallbackPrefix + ":" + alias);
+	 unregisterCommand(map, alias);
+	}
+	unregisterCommand(map, command.getName());
+	unregisterCommand(map, fallbackPrefix + ":" + command.getName());
+	unregisterCommand(map, fallbackPrefix + ":");
+	if(command.getName().isEmpty() || fallbackPrefix.isEmpty()) return;
+	String prefix = fallbackPrefix.toLowerCase().isEmpty() ? "minecraft" : fallbackPrefix.toLowerCase();
+	map.register(prefix, command);
+	REGISTERED_COMMANDS.computeIfAbsent(fallbackPrefix, k -> new HashSet<>()).add(command);
+	if(PLUGINS.add(command.owner())) {
+	 new PluginReloadListener(command.owner());
+	}
+	if(!useBrigadier) return;
+	Bukkit.getOnlinePlayers().forEach(Player::updateCommands);
+	Bukkit.getScheduler().runTaskLater(command.owner(), () -> {
+	registerBrigadierCommand(prefix, command, aliases);
+	registerBrigadierCommand("", command, aliases);
+	 Bukkit.getOnlinePlayers().forEach(Player::updateCommands);
+	}, 20);
+ }
+
+ @SuppressWarnings("unchecked")
+ public static void unregisterCommand(SimpleCommandMap map, String command) {
+	org.bukkit.command.Command oldCMD = map.getCommand(command.toLowerCase());
+	if(oldCMD != null) {
+	 try {
+		Map<String, org.bukkit.command.Command> known = getKnownCommands();
+		known.remove(command.toLowerCase());
+		if(command.contains(":"))
+		 known.remove(command.split(":")[command.split(":").length - 1].toLowerCase());
+	 } catch(Exception e) {
+		throw new RuntimeException(e);
+	 }
+	}
+ }
+
+ private static Map<String, org.bukkit.command.Command> getKnownCommands() {
+	try {
+	 return (Map<String, org.bukkit.command.Command>) knownCommandsField.get(getCommandMap());
+	} catch(IllegalAccessException e) {
+	 return new HashMap<>();
+	}
+ }
+
+ private static void registerBrigadierCommand(String fallback, DynamicCommand command, List<String> aliases) {
 	try {
 	 Class.forName("com.mojang.brigadier.builder.LiteralArgumentBuilder");
-	 LiteralArgumentBuilder<?> brigadierCommand = LiteralArgumentBuilder.literal(command.getName());
-	 boolean previousHasProvider = false;
-	 for(DynamicArgument<?> dynamicArgument : command.getArguments()) {
-		boolean has = buildCommand(command, dynamicArgument, brigadierCommand, null, previousHasProvider);
-		if(has) previousHasProvider = true;
+	 Predicate<Object> basePermission = (ctx) -> {
+		Method getBukkit = ReflectionUtils.getMethod(ctx.getClass(), CommandSender.class);
+		if(getBukkit == null) return true;
+		try {
+		 return command.testPermissionSilent((CommandSender) getBukkit.invoke(ctx));
+		} catch(IllegalAccessException | InvocationTargetException e) {
+		 return true;
+		}
+	 };
+	 String prefix = fallback.isEmpty() ? "" : fallback + ":";
+	 LiteralArgumentBuilder brigadierCommand = LiteralArgumentBuilder.literal(prefix + command.getName())
+			.requires(basePermission);
+	 buildBrigadier(command, brigadierCommand);
+	 ReflectionBrigadier brigadier = getBrigadier(command.owner(), fallback);
+	 LiteralCommandNode<?> node = brigadierCommand.build();
+	 brigadier.register(node);
+	 for(String alias : aliases) {
+		LiteralArgumentBuilder<Object> node2 = LiteralArgumentBuilder.literal(prefix + alias)
+			 .requires(basePermission);
+		buildBrigadier(command, node2);
+		brigadier.register(node2.build());
 	 }
-	 ReflectionBrigadier brigadier = brigadiers.computeIfAbsent(command.owner().getName().toLowerCase(), k -> {
-		ReflectionBrigadier brig = new ReflectionBrigadier(command.owner());
-		ReflectionBrigadier.ensureSetup();
-		return brig;
-	 });
-	 brigadier.register(brigadierCommand.build());
 	} catch(Exception e) {
 	 e.printStackTrace();
 	}
  }
+
+ private static void buildBrigadier(DynamicCommand command, LiteralArgumentBuilder brigadierCommand) {
+	executes(command, brigadierCommand);
+	boolean previousHasProvider = false;
+	for(DynamicArgument<?> dynamicArgument : command.getArguments()) {
+	 boolean has = buildCommand(command, dynamicArgument, brigadierCommand, null, previousHasProvider);
+	 if(has) previousHasProvider = true;
+	}
+ }
+// public static void register(CommandDispatcher<CommandSourceStack> commanddispatcher) {
+//	LiteralCommandNode<CommandSourceStack> literalcommandnode = commanddispatcher
+//		 .register((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)
+//				Commands.literal("teleport").requires((commandlistenerwrapper) -> commandlistenerwrapper.hasPermission(2))).then(Commands.argument("location", Vec3Argument.vec3()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), Collections.singleton(((CommandSourceStack)commandcontext.getSource()).getEntityOrException()), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), (Coordinates)null, (LookAt)null)))).then(Commands.argument("destination", EntityArgument.entity()).executes((commandcontext) -> teleportToEntity((CommandSourceStack)commandcontext.getSource(), Collections.singleton(((CommandSourceStack)commandcontext.getSource()).getEntityOrException()), EntityArgument.getEntity(commandcontext, "destination"))))).then(((RequiredArgumentBuilder)Commands.argument("targets", EntityArgument.entities()).then(((RequiredArgumentBuilder)((RequiredArgumentBuilder)Commands.argument("location", Vec3Argument.vec3()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), (Coordinates)null, (LookAt)null))).then(Commands.argument("rotation", RotationArgument.rotation()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), RotationArgument.getRotation(commandcontext, "rotation"), (LookAt)null)))).then(((LiteralArgumentBuilder)Commands.literal("facing").then(Commands.literal("entity").then(((RequiredArgumentBuilder)Commands.argument("facingEntity", EntityArgument.entity()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), (Coordinates)null, new LookAt.LookAtEntity(EntityArgument.getEntity(commandcontext, "facingEntity"), EntityAnchorArgument.Anchor.FEET)))).then(Commands.argument("facingAnchor", EntityAnchorArgument.anchor()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), (Coordinates)null, new LookAt.LookAtEntity(EntityArgument.getEntity(commandcontext, "facingEntity"), EntityAnchorArgument.getAnchor(commandcontext, "facingAnchor")))))))).then(Commands.argument("facingLocation", Vec3Argument.vec3()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), (Coordinates)null, new LookAt.LookAtPosition(Vec3Argument.getVec3(commandcontext, "facingLocation")))))))).then(Commands.argument("destination", EntityArgument.entity()).executes((commandcontext) -> teleportToEntity((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), EntityArgument.getEntity(commandcontext, "destination"))))));
+//	commanddispatcher.register((LiteralArgumentBuilder)((LiteralArgumentBuilder)Commands.literal("tp").requires((commandlistenerwrapper) -> commandlistenerwrapper.hasPermission(2))).redirect(literalcommandnode));
+// }
 
  public static <T> void registerCommand(T command) {
 	Class<?> type = command.getClass();
@@ -243,15 +350,15 @@ public class DynamicCommandManager {
 	 }
 	});
 	parser(Enum.class, (i, s) -> {
-	 try {
-		for(Enum enumConstant : i.getEnumConstants()) {
-		 if(enumConstant == null) continue;
-		 if(enumConstant.name().equalsIgnoreCase(s)) return enumConstant;
-		}
-		throw new CommandException("Invalid " + i.getSimpleName() + " '" + s + "'");
-	 } catch(Exception e) {
-		throw new CommandException("Invalid " + i.getSimpleName() + " '" + s + "'");
+	 for(Enum enumConstant : i.getEnumConstants()) {
+		if(enumConstant == null) continue;
+		if(enumConstant.name().equalsIgnoreCase(s)) return enumConstant;
 	 }
+	 throw new CommandException("Invalid " + i.getSimpleName() + " '" + s + "'");
+//	 try {
+//	 } catch(Exception e) {
+//		throw new CommandException("Invalid " + i.getSimpleName() + " '" + s + "'");
+//	 }
 	});
 	parser(World.class, (i, s) -> {
 	 World world = Bukkit.getWorld(s);
@@ -304,9 +411,8 @@ public class DynamicCommandManager {
 
  public static <T> boolean canParse(Class<T> clazz, String input) {
 	if(!PARSER.containsKey(clazz) && !PARSER.containsKey(clazz.getSuperclass())) return false;
-	ParserFunction<T> parse = (ParserFunction<T>) PARSER.getOrDefault(clazz, PARSER.get(clazz.getSuperclass()));
 	try {
-	 return clazz.cast(parse.parse(clazz, input)) != null;
+	 return parse(clazz, input) != null;
 	} catch(ClassCastException | CommandException e) {
 	 return false;
 	}
@@ -327,67 +433,115 @@ public class DynamicCommandManager {
 
  @SuppressWarnings("unchecked")
  private static <T> void buildCommand(DynamicCommand executor, DynamicArgument<?> arg, LiteralArgumentBuilder<T> command, ArgumentBuilder<T, ?> stack) {
-	buildCommand(executor,arg,command,stack,false);
+	buildCommand(executor, arg, command, stack, false);
  }
+
  private static <T> boolean buildCommand(DynamicCommand executor, DynamicArgument<?> arg, LiteralArgumentBuilder<T> command, ArgumentBuilder<T, ?> stack, boolean previousHasProvider) {
 	ArgumentBuilder<T, ?> argCommand;
 	boolean hasProvider = true;
 	if(arg instanceof DynamicLiteral) {
 	 argCommand = LiteralArgumentBuilder.literal(arg.name());
-	}
-	else if(arg instanceof DynamicLocationArgument) {
+	} else if(arg instanceof DynamicLocationArgument) {
 	 argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.LOCATION);
 	 hasProvider = false;
-	}
-	else if(arg instanceof DynamicDoubleArgument) {
+	} else if(arg instanceof DynamicDoubleArgument) {
 	 DynamicDoubleArgument dArg = (DynamicDoubleArgument) arg;
 	 argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.RANGE2_DOUBLE.apply(dArg.min(), dArg.max()));
-	}
-	else if(arg instanceof DynamicFloatArgument) {
+	} else if(arg instanceof DynamicFloatArgument) {
 	 DynamicFloatArgument fArg = (DynamicFloatArgument) arg;
 	 argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.RANGE2_FLOAT.apply(fArg.min(), fArg.max()));
-	}
-	else if(arg instanceof DynamicLongArgument) {
+	} else if(arg instanceof DynamicLongArgument) {
 	 DynamicLongArgument lArg = (DynamicLongArgument) arg;
 	 argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.RANGE2_LONG.apply(lArg.min(), lArg.max()));
-	}
-	else if(arg instanceof DynamicIntegerArgument) {
+	} else if(arg instanceof DynamicIntegerArgument) {
 	 DynamicIntegerArgument iArg = (DynamicIntegerArgument) arg;
 	 argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.RANGE2_INTEGER.apply(iArg.min(), iArg.max()));
-	}
-	else if(arg instanceof DynamicBooleanArgument) {
+	} else if(arg instanceof DynamicBooleanArgument) {
 	 argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.BOOL);
-	}
-	else argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.String.WORD);
-	if(argCommand instanceof RequiredArgumentBuilder && !previousHasProvider && hasProvider) {// && hasProvider && isLast){
-	 argCommand = ((RequiredArgumentBuilder<T,?>)argCommand).suggests((ctx, suggestionsBuilder) -> {
-		String[] args = suggestionsBuilder.getInput().substring(1).split(" ", -1);
-		suggestionsBuilder = suggestionsBuilder.createOffset(suggestionsBuilder.getInput().lastIndexOf(32) + 1);
-		Method getBukkit = ReflectionUtils.getMethod(ctx.getSource().getClass(), CommandSender.class);
-		if(getBukkit == null) return suggestionsBuilder.buildFuture();
-		try {
-		 CommandSender sender = (CommandSender) getBukkit.invoke(ctx.getSource());
-		 String remainingLowerCase = suggestionsBuilder.getRemainingLowerCase();
-		 List<String> suggestions = new ArrayList<>();
-		 for(String s : (executor.tabComplete(sender, args[0], Arrays.copyOfRange(args, 1, args.length))))
-			if(!s.isEmpty() && s.toLowerCase().startsWith(remainingLowerCase) && suggestions.stream().noneMatch(s::equalsIgnoreCase))
-			 suggestions.add(s);
-		 for(String suggestion : suggestions) {
-			suggestionsBuilder.suggest(suggestion);
+	} else argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.String.STRING);
+	if(arg instanceof DynamicStringArgument) {
+	 if(arg.span() == -1 || arg.span() == 1) {
+		argCommand = RequiredArgumentBuilder.argument(arg.name(), arg.span() == 1 ? BrigadierTypes.String.STRING : BrigadierTypes.String.GREEDY);
+		argCommand = requires(arg, argCommand);
+	 } else {
+		List<ArgumentBuilder<T, ?>> list = new ArrayList<>();
+		for(int i = 0; i < arg.span(); i++) {
+		 argCommand = RequiredArgumentBuilder.argument(arg.name() + "-" + (i + 1), BrigadierTypes.String.STRING);
+//		 argCommand = requires(arg, argCommand);
+		 if(argCommand instanceof RequiredArgumentBuilder && (!previousHasProvider || i > 0)) {// && hasProvider && isLast){
+			argCommand = ((RequiredArgumentBuilder<T, ?>) argCommand).suggests((ctx, suggestionsBuilder) ->
+				 provideSuggestions(executor, ctx, suggestionsBuilder));
 		 }
-		 return suggestionsBuilder.buildFuture();
-		} catch(IllegalAccessException | InvocationTargetException e) {
-		 e.printStackTrace();
-		 return suggestionsBuilder.buildFuture();
+		 executes(executor, argCommand);
+		 list.add(0, argCommand);
 		}
-	 });
+		for(int i = 0; i < list.size() - 1; i++) {
+		 ArgumentBuilder<T, ?> argument = list.get(i + 1);
+		 ArgumentBuilder<T, ?> nextArg = list.get(i);
+		 applyExecutor(executor, arg, command, argument, nextArg);
+		 argument.then(nextArg);
+		}
+		applyExecutor(executor, arg, command, stack, list.get(list.size() - 1));
+		return true;
+	 }
+	}
+	argCommand = requires(arg, argCommand);
+	if(argCommand instanceof RequiredArgumentBuilder && !previousHasProvider && hasProvider) {// && hasProvider && isLast){
+	 argCommand = ((RequiredArgumentBuilder<T, ?>) argCommand).suggests((ctx, suggestionsBuilder) -> provideSuggestions(executor, ctx, suggestionsBuilder));
 	}
 	applyExecutor(executor, arg, command, stack, argCommand);
 	return hasProvider;
  }
 
+ private static <T> CompletableFuture<Suggestions> provideSuggestions(DynamicCommand executor, CommandContext<T> ctx, SuggestionsBuilder suggestionsBuilder) {
+	String[] args = suggestionsBuilder.getInput().substring(1).split(" ", -1);
+	suggestionsBuilder = suggestionsBuilder.createOffset(suggestionsBuilder.getInput().lastIndexOf(' ') + 1);
+	Method getBukkit = ReflectionUtils.getMethod(ctx.getSource().getClass(), CommandSender.class);
+	if(getBukkit == null) return suggestionsBuilder.buildFuture();
+	try {
+	 CommandSender sender = (CommandSender) getBukkit.invoke(ctx.getSource());
+	 String remainingLowerCase = suggestionsBuilder.getRemainingLowerCase();
+	 List<String> suggestions = new ArrayList<>();
+	 for(String s : (executor.tabComplete(sender, args[0], Arrays.copyOfRange(args, 1, args.length))))
+		if(!s.isEmpty() && s.toLowerCase().startsWith(remainingLowerCase) && suggestions.stream().noneMatch(s::equalsIgnoreCase))
+		 suggestions.add(s);
+	 for(String suggestion : suggestions) {
+		suggestionsBuilder.suggest(suggestion);
+	 }
+	 return suggestionsBuilder.buildFuture();
+	} catch(IllegalAccessException | InvocationTargetException e) {
+	 e.printStackTrace();
+	 return suggestionsBuilder.buildFuture();
+	}
+ }
+
+ private static <T> ArgumentBuilder<T, ?> requires(DynamicArgument<?> arg, ArgumentBuilder<T, ?> argCommand) {
+	return argCommand.requires((ctx) -> {
+	 try {
+		Method getBukkit = ReflectionUtils.getMethod(ctx.getClass(), CommandSender.class);
+		if(getBukkit == null) return true;
+		arg.predicate().test((CommandSender) getBukkit.invoke(ctx), arg.name());
+		return true;
+	 } catch(Exception e) {
+		return false;
+	 }
+	});
+ }
+
 
  private static <T> void applyExecutor(DynamicCommand executor, DynamicArgument<?> arg, LiteralArgumentBuilder<T> command, ArgumentBuilder<T, ?> stack, ArgumentBuilder<T, ?> argCommand) {
+	if(arg.required() || (arg.isOptional() && arg.parent(DynamicArgument::required) != null))
+	 executes(executor, argCommand);
+	boolean previousHasProvider = false;
+	for(DynamicArgument<?> argument : arg.subArguments()) {
+	 boolean has = buildCommand(executor, argument, command, argCommand, previousHasProvider);
+	 if(has) previousHasProvider = true;
+	}
+	if(stack != null) stack.then(argCommand);
+	else command.then(argCommand);
+ }
+
+ private static <T> void executes(DynamicCommand executor, ArgumentBuilder<T, ?> argCommand) {
 	argCommand.executes((ctx) -> {
 	 Method getBukkit = ReflectionUtils.getMethod(ctx.getSource().getClass(), CommandSender.class);
 	 if(getBukkit == null) return 0;
@@ -401,13 +555,30 @@ public class DynamicCommandManager {
 		return 0;
 	 }
 	});
-	boolean previousHasProvider = false;
-	for(DynamicArgument<?> argument : arg.subArguments()) {
-	 boolean has = buildCommand(executor, argument, command, argCommand, previousHasProvider);
-	 if(has) previousHasProvider = true;
-	}
-	if(stack != null) stack.then(argCommand);
-	if(stack == null) command.then(argCommand);
  }
 
+ public static ReflectionBrigadier getBrigadier(Plugin plugin, String fallback) {
+	fallback = fallback == null ? plugin.getName().toLowerCase() : fallback;
+	return BRIGADIERS.computeIfAbsent(fallback, c -> {
+	 ReflectionBrigadier brigadier = new ReflectionBrigadier(plugin);
+	 brigadier.ensureSetup();
+	 for(Map.Entry<String, org.bukkit.command.Command> entry : new HashMap<>(getKnownCommands()).entrySet()) {
+		Class<?> isDynamic = entry.getValue().getClass();
+		while(isDynamic != null && !isDynamic.getName().equalsIgnoreCase(DynamicCommand.class.getName())) {
+		 isDynamic = isDynamic.getSuperclass();
+		}
+		if(isDynamic != null) {
+		 if(!entry.getKey().startsWith(c + ":")) continue;
+		 entry.getValue().unregister(getCommandMap());
+		 getKnownCommands().remove(entry.getKey());
+		 brigadier.removeChild(brigadier.getDispatcher().getRoot(), entry.getKey().toLowerCase());
+		 brigadier.removeChild(brigadier.getDispatcher().getRoot(), entry.getValue().getName().toLowerCase());
+		 for(String alias : entry.getValue().getAliases()) {
+		 brigadier.removeChild(brigadier.getDispatcher().getRoot(), alias.toLowerCase());
+		 }
+		}
+	 }
+	 return brigadier;
+	});
+ }
 }
