@@ -2,7 +2,6 @@ package io.dynamicstudios.commands.command.argument.types;
 
 import io.dynamicstudios.commands.command.argument.DynamicArgument;
 import io.dynamicstudios.commands.exceptions.CommandException;
-import io.dynamicstudios.commands.exceptions.brigadier.CommandSyntaxException;
 import org.bukkit.command.CommandSender;
 
 public class DynamicStringArgument extends DynamicArgument<String> {
@@ -22,7 +21,8 @@ public class DynamicStringArgument extends DynamicArgument<String> {
 
  @Override
  public boolean isValid(String input) {
-	return (span() == -1 || (input.split(" ").length <= span() && !input.startsWith("\"")) || input.matches("\\\"(?<data>(?:(?=\\\\\\\")..|(?!\\\").)*)\\\""))
+	return (span() == -1 || (input.split(" ").length <= span() && !input.startsWith("\""))
+		 || input.matches("\\\"(?<data>(?:(?=\\\\\\\")..|(?!\\\").)+)\\\""))
 		 && !input.isEmpty();
  }
 

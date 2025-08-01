@@ -20,7 +20,7 @@ public class DefaultHelpPage extends HelpPage {
 
  public void help(CommandSender sender, DynamicCommand command, int page) {
 	List<Map.Entry<String, String>> subCommand = new ArrayList<>();
-	DynamicArgument<?>[] arr = Arrays.stream(command.rawArguments()).filter(c-> {
+	DynamicArgument<?>[] arr = Arrays.stream(command.rawArguments()).filter(c -> {
 	 try {
 		c.predicate().test(sender, c.name());
 		return true;
@@ -30,9 +30,9 @@ public class DefaultHelpPage extends HelpPage {
 	}).collect(Collectors.toList()).toArray(new DynamicArgument[0]);
 	LinkedHashSet<Map.Entry<String, String>> entries = new LinkedHashSet<>(command.generateMap(sender, arr).entrySet());
 	Map.Entry<String, String> prev = null;
-	for(Map.Entry<String,String> argument : entries) {
+	for(Map.Entry<String, String> argument : entries) {
 	 int addIndex = prev == null ? 0 : (argument.getValue().startsWith(prev.getValue()) && prev.getValue().trim().split(" ").length < argument.getValue().trim().split(" ").length ? 1 : 0);
-	 subCommand.add(addIndex,argument);
+	 subCommand.add(addIndex, argument);
 	 prev = argument;
 	}
 	int pageSize = DynamicCommandManager.COMMANDS_PER_PAGE;

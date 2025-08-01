@@ -12,13 +12,11 @@ io/dynamicstudios/commands/command/argument/types/helper/AxisAlignedBB.class
 io/dynamicstudios/commands/brigadier/BrigadierTypes.class
 io/dynamicstudios/commands/exceptions/brigadier/Dynamic2CommandExceptionType.class
 io/dynamicstudios/commands/command/argument/types/SelectorParser.class
-io/dynamicstudios/commands/command/node/CommandNode.class
 io/dynamicstudios/commands/brigadier/registration/ReflectionUtil.class
 io/dynamicstudios/commands/command/argument/types/helper/Direction$EnumAxis$2.class
 io/dynamicstudios/commands/command/argument/DynamicArguments.class
 io/dynamicstudios/commands/command/argument/ArgumentPredicate.class
 io/dynamicstudios/commands/util/StringMatcher.class
-io/dynamicstudios/commands/command/node/arguments/Literal.class
 io/dynamicstudios/commands/brigadier/registration/PaperBrigadier$BrigadierCommand.class
 io/dynamicstudios/commands/brigadier/registration/Brigadier.class
 io/dynamicstudios/commands/command/help/DefaultHelpPage.class
@@ -26,10 +24,11 @@ io/dynamicstudios/commands/brigadier/registration/BrigadierProvider.class
 io/dynamicstudios/commands/brigadier/registration/PaperBrigadier$1.class
 io/dynamicstudios/commands/brigadier/registration/ReflectionBrigadier$CommandDataSendListener.class
 io/dynamicstudios/commands/command/argument/types/DynamicLongArgument.class
-io/dynamicstudios/commands/command/node/CommandContext.class
+io/dynamicstudios/commands/util/ParseResult$ParseStatus.class
 io/dynamicstudios/commands/brigadier/MinecraftArgumentTypes$TestArgument.class
 io/dynamicstudios/commands/command/annotation/Argument.class
 io/dynamicstudios/commands/exceptions/brigadier/DynamicCommandExceptionType.class
+io/dynamicstudios/commands/util/ParseResult.class
 io/dynamicstudios/commands/brigadier/MinecraftArgumentTypes.class
 io/dynamicstudios/commands/command/argument/types/DynamicFloatArgument.class
 io/dynamicstudios/commands/brigadier/registration/ReflectionBrigadier.class
@@ -44,7 +43,6 @@ io/dynamicstudios/commands/command/argument/types/helper/MathHelper.class
 io/dynamicstudios/commands/command/argument/types/DynamicIntegerArgument.class
 io/dynamicstudios/commands/command/argument/types/helper/Direction$EnumAxis.class
 io/dynamicstudios/commands/command/argument/types/helper/Direction$EnumAxis$1.class
-io/dynamicstudios/commands/command/node/NodeArgument.class
 io/dynamicstudios/commands/brigadier/NMSReflectionUtil.class
 io/dynamicstudios/commands/command/argument/types/DynamicLocationArgument.class
 io/dynamicstudios/commands/util/ParserFunction.class
@@ -52,7 +50,6 @@ io/dynamicstudios/commands/exceptions/brigadier/CommandSyntaxException.class
 io/dynamicstudios/commands/command/argument/types/helper/Vec3D.class
 io/dynamicstudios/commands/command/DynamicCommand.class
 io/dynamicstudios/commands/command/annotation/OptionalArgument.class
-io/dynamicstudios/commands/command/node/CommandSourceWrapper.class
 io/dynamicstudios/commands/exceptions/CommandNotImplementedException.class
 io/dynamicstudios/commands/brigadier/registration/ReflectionBrigadier$ServerReloadListener.class
 io/dynamicstudios/commands/command/PluginReloadListener.class

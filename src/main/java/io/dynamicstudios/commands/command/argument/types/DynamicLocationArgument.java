@@ -2,7 +2,6 @@ package io.dynamicstudios.commands.command.argument.types;
 
 import io.dynamicstudios.commands.command.argument.DynamicArgument;
 import io.dynamicstudios.commands.exceptions.CommandException;
-import io.dynamicstudios.commands.exceptions.brigadier.CommandSyntaxException;
 import io.dynamicstudios.commands.exceptions.brigadier.LiteralMessage;
 import io.dynamicstudios.commands.exceptions.brigadier.SimpleCommandExceptionType;
 import org.bukkit.Location;

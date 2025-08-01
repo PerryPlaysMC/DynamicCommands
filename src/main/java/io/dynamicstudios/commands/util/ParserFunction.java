@@ -8,6 +8,6 @@ import io.dynamicstudios.commands.exceptions.CommandException;
  **/
 public interface ParserFunction<T> {
 
- T parse(Class<T> inputClazz, String input) throws CommandException;
+ ParseResult<T> parse(Class<T> inputClazz, String input) throws CommandException;
 
 }

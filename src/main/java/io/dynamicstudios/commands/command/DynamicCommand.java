@@ -5,8 +5,8 @@ import io.dynamicstudios.commands.command.argument.DynamicArgument;
 import io.dynamicstudios.commands.command.argument.DynamicArgumentBuilder;
 import io.dynamicstudios.commands.command.argument.DynamicArguments;
 import io.dynamicstudios.commands.command.argument.types.DynamicLiteral;
+import io.dynamicstudios.commands.command.argument.types.DynamicStringArgument;
 import io.dynamicstudios.commands.exceptions.CommandException;
-import net.minecraft.commands.Commands;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -128,10 +128,11 @@ public abstract class DynamicCommand extends Command {
 	 help.add("{cmdContent}");
 	 String formattedName = "<hover=\"" + String.join("\n", help).replace("\"", "\\\"") + "\">" + formName + "</hover>";
 	 String data = previous.isEmpty() ? formattedName : previous + " " + formattedName;
-	 String cmdInput = colorize(getName() + " " + (commandKey.isEmpty() ? "" : commandKey + " ") + inputName, "", "", "$1");
-	 String key = "<suggest=\"/" + cmdInput + "\">" + data + "</suggest>";
+	 String cmdInput = colorize(getName() + " " + (commandKey.isEmpty() ? "" : commandKey + " ") + inputName,
+			"", "", "$1");
+	 String key = "<suggest=\"/" + colorize(cmdInput, "", "", "") + "\">" + data + "</suggest>";
 	 if(argument.subArguments().length <= 1) {
-		if((optional || argument instanceof DynamicLiteral || argument.required() || (argument.executes() == null && argument.parent(c->c.executes()!=null) == null)) && argument.subArguments().length == 0) {
+		if((optional || argument instanceof DynamicLiteral || argument.required() || (argument.executes() == null && argument.parent(c -> c.executes() != null) == null)) && argument.subArguments().length == 0) {
 		 String inf = argument.helpDescription();
 		 DynamicArgument<?> parent = argument.parent();
 		 while(parent != null && inf == null) {
@@ -158,7 +159,9 @@ public abstract class DynamicCommand extends Command {
  }
 
  public static String colorize(String argument, String replacement1, String replacement2, String replacement3) {
-	return argument.replaceAll("\\[([^]]+)]", replacement2).replaceAll("%([^%]+)%", replacement1).replaceAll("\\{([^}]+)}", replacement3);
+	return argument.replaceAll("\\[([^]]+)]", replacement2)
+		 .replaceAll("<([^>]+)>", replacement1)
+		 .replaceAll("\\{([^}]+)}", replacement3);
  }
 
  public static String colorize(String argument) {
@@ -197,16 +200,21 @@ public abstract class DynamicCommand extends Command {
 
  @Override
  public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
+	List<String> completions = getCompletions(sender, alias, args);
+	return completions == null ? new ArrayList<>() : completions.stream().map(s -> s.replace("§:", "")).collect(Collectors.toList());
+ }
+
+ public List<String> getCompletions(CommandSender sender, String alias, String[] args) {
 	DynamicArguments arguments = new DynamicArguments(sender, rawArguments.clone(), args);
 	List<String> result = new ArrayList<>();
 	if(args.length == 1) {
 	 for(DynamicArgument<?> argument : rawArguments) {
-		collectInputs(sender, args, 0, result, argument);
+		collectInputs(sender, args, arguments, 0, result, argument);
 	 }
 	} else {
 	 DynamicArgument<?> argument = argument(sender, arguments);
 	 if(argument == null) return result;
-	 result.addAll(argumentNames(sender, Arrays.copyOfRange(args, 1, args.length), argument, 0));
+	 result.addAll(argumentNames(sender, arguments, Arrays.copyOfRange(args, 1, args.length), argument, 0));
 	 if(!result.isEmpty()) return result;
 	}
 	return result;
@@ -222,38 +230,55 @@ public abstract class DynamicCommand extends Command {
 	return text;
  }
 
- private List<String> argumentNames(CommandSender sender, String[] args, DynamicArgument<?> argument, int depth) {
+ private List<String> argumentNames(CommandSender sender, DynamicArguments arguments, String[] args, DynamicArgument<?> argument, int depth) {
 	List<String> result = new ArrayList<>();
 	List<String> valid = new ArrayList<>();
 	for(DynamicArgument<?> dynamicArgument : argument.subArguments()) {
 	 if(depth > args.length) continue;
 	 String key = join(Arrays.copyOfRange(args, depth, Math.min(args.length, depth + (dynamicArgument.span() == -1 ? 256 : dynamicArgument.span()))));
-	 if(key.isEmpty() || dynamicArgument.isValid(key)) valid.add(dynamicArgument.name());
+	 if(key.isEmpty() || dynamicArgument.isValid(key)) {
+		valid.add(dynamicArgument.name());
+	 }
 	}
-	List<String> other = new ArrayList<>();
+	if(valid.isEmpty()) return result;
+	if(argument.subArguments().length == 0) {
+	 if(argument instanceof DynamicStringArgument && argument.span() == -1) {
+		collectInputs(sender, args, arguments, 0, result, argument);
+		return result;
+	 }
+	}
 	for(DynamicArgument<?> dynamicArgument : argument.subArguments()) {
-	 if(depth > args.length) continue;
-	 if(!valid.isEmpty() && !valid.contains(dynamicArgument.name())) {
+	 if(!valid.contains(dynamicArgument.name())) {
 		continue;
 	 }
 	 if(depth == args.length - 1) {
-		collectInputs(sender, args, 0, result, dynamicArgument);
+		if(arguments.hasArgument(dynamicArgument.parent().name())) {
+		 collectInputs(sender, args, arguments, 0, result, dynamicArgument);
+		}
 		if(!result.isEmpty()) continue;
 	 }
-	 if(dynamicArgument.isValid(join(Arrays.copyOfRange(args, depth, Math.min(args.length, depth + (dynamicArgument.span() == -1 ? 256 : dynamicArgument.span())))))) {
+	 String join = join(Arrays.copyOfRange(args, depth, Math.min(args.length, depth + (dynamicArgument.span() == -1 ? 256 : dynamicArgument.span()))));
+	 if(dynamicArgument.isValid(join)) {
 		if(testPredicate(sender, args, dynamicArgument)) continue;
 		if(dynamicArgument.span() > 1) {
 		 for(int i = 0; i < dynamicArgument.span(); i++) {
 			if(depth + i == args.length - 1) {
-			 collectInputs(sender, args, i, result, dynamicArgument);
+			 collectInputs(sender, args, arguments, i, result, dynamicArgument);
 			}
 		 }
 		 if(depth + (dynamicArgument.span()) < args.length)
 			if(dynamicArgument.subArguments().length > 0)
-			 result.addAll(argumentNames(sender, args, dynamicArgument, depth + dynamicArgument.span()));
-		} else result.addAll(argumentNames(sender, args, dynamicArgument, depth + 1));
+			 result.addAll(argumentNames(sender, arguments, args, dynamicArgument, depth + dynamicArgument.span()));
+		} else result.addAll(argumentNames(sender, arguments, args, dynamicArgument, depth + 1));
 		if(!result.isEmpty()) break;
-	 } else collectInputs(sender, args, 0, result, dynamicArgument);
+	 }
+//	 else {
+////		if(arguments.hasArgument(dynamicArgument.parent().name())) {
+////		 List<String> f = new ArrayList<>();
+////		 collectInputs(sender, args, arguments, 0, f, dynamicArgument);
+////		 System.out.println("Collecting: " + dynamicArgument.name() + ": " + f);
+////		}
+//	 }
 	}
 	return result;
  }
@@ -267,36 +292,88 @@ public abstract class DynamicCommand extends Command {
 	return false;
  }
 
- private void collectInputs(CommandSender sender, String[] args, int index, List<String> result, DynamicArgument<?> dynamicArgument) {
+ private void collectInputs(CommandSender sender, String[] args, DynamicArguments arguments, int index, List<String> result, DynamicArgument<?> dynamicArgument) {
 	if(testPredicate(sender, args, dynamicArgument)) return;
 	List<String> suggestions = dynamicArgument.suggestions();
-	 if(suggestions == null && dynamicArgument.suggestions(sender) != null)
-		suggestions = dynamicArgument.suggestions(sender);
 	if(suggestions == null) {
-	 if(DynamicCommandManager.hasSuggestionProviderInput(dynamicArgument.type()))
+	 if(dynamicArgument.suggestions(sender) != null)
+		suggestions = dynamicArgument.suggestions(sender);
+	 else if(dynamicArgument.suggestions(sender, arguments) != null)
+		suggestions = dynamicArgument.suggestions(sender, arguments);
+	 else if(DynamicCommandManager.hasSuggestionProviderInput(dynamicArgument.type()))
 		suggestions = DynamicCommandManager.suggestionsInput(dynamicArgument.type());
 	 else if(DynamicCommandManager.hasSenderSuggestions(dynamicArgument.type()))
 		suggestions = DynamicCommandManager.senderSuggestions(dynamicArgument.type()).apply(sender);
 	 else if(DynamicCommandManager.hasSuggestionProvider(dynamicArgument.type()))
 		suggestions = DynamicCommandManager.suggestions(dynamicArgument.type());
 	}
-	if(suggestions != null) {
-	 for(String suggestion : suggestions) {
-		String[] options = suggestion.split(" ");
-		for(int i = index; i <= options.length; i++) {
-		 String key = join(Arrays.copyOfRange(options, index, i));
-		 if(!key.toLowerCase().startsWith(args[args.length - 1].toLowerCase())) continue;
-		 result.add(key);
-		}
+	if(suggestions == null || suggestions.isEmpty()) {
+	 List<String> append = dynamicArgument.suggestions(args[args.length - 1]);
+	 appendResults(args, result, append);
+	 return;
+	}
+	for(String suggestion : suggestions) {
+	 if(dynamicArgument instanceof DynamicStringArgument && dynamicArgument.span() == -1) {
+		String key = suggestion;
+		appendValue(key, args, result);
+		continue;
+	 }
+	 String[] options = suggestion.split(" ");
+	 for(int i = index; i <= options.length; i++) {
+		String key = join(Arrays.copyOfRange(options, index, i));
+		appendValue(key, args, result);
 	 }
 	}
+	List<String> append = dynamicArgument.suggestions(args[args.length - 1]);
+	appendResults(args, result, append);
+ }
+
+ private static void appendResults(String[] args, List<String> result, List<String> append) {
+	if(append != null && !append.isEmpty()) {
+	 String arg = args[args.length - 1];
+	 List<String> typedMatches = new ArrayList<>();
+	 Map<String, String> allMatches = new HashMap<>();
+	 for(String s : append) {
+		List<String> longestMatch = new ArrayList<>();
+		boolean typed = false;
+		for(int i = arg.length(); i >= 0; i--) {
+		 String sub = arg.substring(i).toLowerCase();
+		 if(s.toLowerCase().startsWith(sub)) {
+			longestMatch.add(arg.substring(0, i) + "§:" + s);
+			if(!sub.isEmpty()) typed = true;
+		 }
+		}
+		if(!typed)
+		 longestMatch.stream().min(Comparator.comparingInt(String::length))
+				.ifPresent(c -> allMatches.put(s, c));
+		else longestMatch.stream().min(Comparator.comparingInt(String::length)).ifPresent(typedMatches::add);
+	 }
+	 if(!typedMatches.isEmpty())
+		result.addAll(typedMatches);
+	 else for(String s : append) {
+		if(!allMatches.containsKey(s)) continue;
+		result.add(allMatches.get(s));
+	 }
+	 if(result.isEmpty())
+		append.forEach(c -> result.add(args[args.length - 1] + "§:" + c));
+	}
+ }
+
+ private static void appendValue(String key, String[] args, List<String> result) {
+	if(!key.toLowerCase().startsWith(args[args.length - 1].toLowerCase())) return;
+	if(key.equalsIgnoreCase(args[args.length - 1])) return;
+	result.add(key);
  }
 
  @Override
  public boolean execute(CommandSender sender, String label, String[] args) {
 	try {
 	 return performCommand(sender, label, args);
-	} catch(CommandException e) {
+	} catch(CommandException | ClassCastException e) {
+	 if(e.getMessage().matches(".*cannot be cast to class.*Player.*")) {
+		sender.sendMessage("§cOnly players may perform this command");
+		return true;
+	 }
 	 sender.sendMessage("§4Error while executing command\n§c" + e.getMessage());
 	 return true;
 	}

@@ -11,13 +11,12 @@ import io.dynamicstudios.commands.brigadier.BrigadierTypes;
 import io.dynamicstudios.commands.brigadier.registration.ReflectionBrigadier;
 import io.dynamicstudios.commands.command.DynamicCommand;
 import io.dynamicstudios.commands.command.PluginReloadListener;
-import io.dynamicstudios.commands.command.annotation.Argument;
-import io.dynamicstudios.commands.command.annotation.Command;
 import io.dynamicstudios.commands.command.argument.DynamicArgument;
 import io.dynamicstudios.commands.command.argument.types.*;
 import io.dynamicstudios.commands.command.help.DefaultHelpPage;
 import io.dynamicstudios.commands.command.help.HelpPage;
 import io.dynamicstudios.commands.exceptions.CommandException;
+import io.dynamicstudios.commands.util.ParseResult;
 import io.dynamicstudios.commands.util.ParserFunction;
 import io.dynamicstudios.json.data.util.CColor;
 import io.dynamicstudios.json.data.util.packet.ReflectionUtils;
@@ -47,13 +46,14 @@ import java.util.stream.Stream;
  * Creator: PerryPlaysMC
  * Created: 08/2022
  **/
+@SuppressWarnings("unused")
 public class DynamicCommandManager {
- private static Map<String, Set<DynamicCommand>> REGISTERED_COMMANDS = new HashMap<>();
+ private static final Map<String, Set<DynamicCommand>> REGISTERED_COMMANDS = new HashMap<>();
 
- private static Set<Plugin> PLUGINS = new HashSet<>();
+ private static final Set<Plugin> PLUGINS = new HashSet<>();
 
  static {
-	CColor.registerColorTranslator((input) -> input
+	CColor.registerColorTranslator("help_colors", (input) -> input
 		 .replace("[c]", "&7")
 		 .replace("[i]", "&5")
 		 .replace("[r]", "&6")
@@ -124,8 +124,8 @@ public class DynamicCommandManager {
 	if(!useBrigadier) return;
 	Bukkit.getOnlinePlayers().forEach(Player::updateCommands);
 	Bukkit.getScheduler().runTaskLater(command.owner(), () -> {
-	registerBrigadierCommand(prefix, command, aliases);
-	registerBrigadierCommand("", command, aliases);
+	 registerBrigadierCommand(prefix, command, aliases);
+	 registerBrigadierCommand("", command, aliases);
 	 Bukkit.getOnlinePlayers().forEach(Player::updateCommands);
 	}, 20);
  }
@@ -145,10 +145,11 @@ public class DynamicCommandManager {
 	}
  }
 
+ @SuppressWarnings("unchecked")
  private static Map<String, org.bukkit.command.Command> getKnownCommands() {
 	try {
 	 return (Map<String, org.bukkit.command.Command>) knownCommandsField.get(getCommandMap());
-	} catch(IllegalAccessException e) {
+	} catch(IllegalAccessException | NullPointerException e) {
 	 return new HashMap<>();
 	}
  }
@@ -166,7 +167,7 @@ public class DynamicCommandManager {
 		}
 	 };
 	 String prefix = fallback.isEmpty() ? "" : fallback + ":";
-	 LiteralArgumentBuilder brigadierCommand = LiteralArgumentBuilder.literal(prefix + command.getName())
+	 LiteralArgumentBuilder<?> brigadierCommand = LiteralArgumentBuilder.literal(prefix + command.getName())
 			.requires(basePermission);
 	 buildBrigadier(command, brigadierCommand);
 	 ReflectionBrigadier brigadier = getBrigadier(command.owner(), fallback);
@@ -183,7 +184,7 @@ public class DynamicCommandManager {
 	}
  }
 
- private static void buildBrigadier(DynamicCommand command, LiteralArgumentBuilder brigadierCommand) {
+ private static void buildBrigadier(DynamicCommand command, LiteralArgumentBuilder<?> brigadierCommand) {
 	executes(command, brigadierCommand);
 	boolean previousHasProvider = false;
 	for(DynamicArgument<?> dynamicArgument : command.getArguments()) {
@@ -191,38 +192,32 @@ public class DynamicCommandManager {
 	 if(has) previousHasProvider = true;
 	}
  }
-// public static void register(CommandDispatcher<CommandSourceStack> commanddispatcher) {
-//	LiteralCommandNode<CommandSourceStack> literalcommandnode = commanddispatcher
-//		 .register((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)
-//				Commands.literal("teleport").requires((commandlistenerwrapper) -> commandlistenerwrapper.hasPermission(2))).then(Commands.argument("location", Vec3Argument.vec3()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), Collections.singleton(((CommandSourceStack)commandcontext.getSource()).getEntityOrException()), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), (Coordinates)null, (LookAt)null)))).then(Commands.argument("destination", EntityArgument.entity()).executes((commandcontext) -> teleportToEntity((CommandSourceStack)commandcontext.getSource(), Collections.singleton(((CommandSourceStack)commandcontext.getSource()).getEntityOrException()), EntityArgument.getEntity(commandcontext, "destination"))))).then(((RequiredArgumentBuilder)Commands.argument("targets", EntityArgument.entities()).then(((RequiredArgumentBuilder)((RequiredArgumentBuilder)Commands.argument("location", Vec3Argument.vec3()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), (Coordinates)null, (LookAt)null))).then(Commands.argument("rotation", RotationArgument.rotation()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), RotationArgument.getRotation(commandcontext, "rotation"), (LookAt)null)))).then(((LiteralArgumentBuilder)Commands.literal("facing").then(Commands.literal("entity").then(((RequiredArgumentBuilder)Commands.argument("facingEntity", EntityArgument.entity()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), (Coordinates)null, new LookAt.LookAtEntity(EntityArgument.getEntity(commandcontext, "facingEntity"), EntityAnchorArgument.Anchor.FEET)))).then(Commands.argument("facingAnchor", EntityAnchorArgument.anchor()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), (Coordinates)null, new LookAt.LookAtEntity(EntityArgument.getEntity(commandcontext, "facingEntity"), EntityAnchorArgument.getAnchor(commandcontext, "facingAnchor")))))))).then(Commands.argument("facingLocation", Vec3Argument.vec3()).executes((commandcontext) -> teleportToPos((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), ((CommandSourceStack)commandcontext.getSource()).getLevel(), Vec3Argument.getCoordinates(commandcontext, "location"), (Coordinates)null, new LookAt.LookAtPosition(Vec3Argument.getVec3(commandcontext, "facingLocation")))))))).then(Commands.argument("destination", EntityArgument.entity()).executes((commandcontext) -> teleportToEntity((CommandSourceStack)commandcontext.getSource(), EntityArgument.getEntities(commandcontext, "targets"), EntityArgument.getEntity(commandcontext, "destination"))))));
-//	commanddispatcher.register((LiteralArgumentBuilder)((LiteralArgumentBuilder)Commands.literal("tp").requires((commandlistenerwrapper) -> commandlistenerwrapper.hasPermission(2))).redirect(literalcommandnode));
+
+// public static <T> void registerCommand(T command) {
+//	Class<?> type = command.getClass();
+//	Command annotatedCommand = type.getAnnotation(Command.class);
+//	if(annotatedCommand == null) return;
+//	Map<Argument, List<Argument>> argsFor = new LinkedHashMap<>();
+//	Map<String, Argument> byName = new LinkedHashMap<>();
+//	Map<Argument, Method> methodMap = new LinkedHashMap<>();
+//	for(Method method : type.getMethods()) {
+//	 Argument argument = method.getAnnotation(Argument.class);
+//	 if(argument == null) continue;
+//	 byName.put(argument.name(), argument);
+//	 Class<?> firstParam = method.getParameterTypes()[0];
+//	 if(firstParam.getName().equals(Player.class.getName()) && !argument.playerOnly()) continue;
+//	 if(!firstParam.getName().equals(CommandSender.class.getName()) && argument.playerOnly()) continue;
+//	 Argument argF = byName.get(argument.forArg().isEmpty() ? argument.name() : argument.forArg());
+//	 argsFor.putIfAbsent(argF, new ArrayList<>());
+//	 if(!argument.forArg().isEmpty()) argsFor.get(argF).add(argument);
+//	 methodMap.put(argument, method);
+//	}
+//	List<DynamicArgument<?>> args = new ArrayList<>();
+//	for(Argument argument : argsFor.keySet()) {
+//
+//	}
+//
 // }
-
- public static <T> void registerCommand(T command) {
-	Class<?> type = command.getClass();
-	Command annotatedCommand = type.getAnnotation(Command.class);
-	if(annotatedCommand == null) return;
-	Map<Argument, List<Argument>> argsFor = new LinkedHashMap<>();
-	Map<String, Argument> byName = new LinkedHashMap<>();
-	Map<Argument, Method> methodMap = new LinkedHashMap<>();
-	for(Method method : type.getMethods()) {
-	 Argument argument = method.getAnnotation(Argument.class);
-	 if(argument == null) continue;
-	 byName.put(argument.name(), argument);
-	 Class<?> firstParam = method.getParameterTypes()[0];
-	 if(firstParam.getName().equals(Player.class.getName()) && !argument.playerOnly()) continue;
-	 if(!firstParam.getName().equals(CommandSender.class.getName()) && argument.playerOnly()) continue;
-	 Argument argF = byName.get(argument.forArg().isEmpty() ? argument.name() : argument.forArg());
-	 argsFor.putIfAbsent(argF, new ArrayList<>());
-	 if(!argument.forArg().isEmpty()) argsFor.get(argF).add(argument);
-	 methodMap.put(argument, method);
-	}
-	List<DynamicArgument<?>> args = new ArrayList<>();
-	for(Argument argument : argsFor.keySet()) {
-
-	}
-
- }
 
  //<editor-fold desc="Suggestion Providers">
 
@@ -250,6 +245,7 @@ public class DynamicCommandManager {
 	SUGGESTIONS.put(clazz, function);
  }
 
+ @SuppressWarnings("unchecked")
  public static <T> void suggestions(Class<T> clazz, Function<Class<T>, List<String>> function) {
 	INPUT_SUGGESTIONS.put(clazz, (c) -> function.apply((Class<T>) c));
  }
@@ -298,98 +294,95 @@ public class DynamicCommandManager {
  private static final HashMap<Class<?>, ParserFunction<?>> PARSER = new HashMap<>();
 
  static {
-	parser(String.class, (i, s) -> s);
+	parser(String.class, (i, s) -> new ParseResult<>(s, ParseResult.ParseStatus.PARSED));
 
 
 	parser(Player.class, (i, s) -> {
-	 Player player = Bukkit.getOnlinePlayers().stream()
-			.filter(p -> p.getName().equalsIgnoreCase(s)
-				 || p.getDisplayName().equalsIgnoreCase(s)
-				 || p.getPlayerListName().equalsIgnoreCase(s)
-				 || (p.getCustomName() != null && p.getCustomName().equalsIgnoreCase(s))).findFirst().orElse(null);
-	 if(player == null) {
-		try {
-		 UUID id = UUID.fromString(s);
-		 player = Bukkit.getOnlinePlayers().stream()
-				.filter(p -> p.getUniqueId().equals(id)).findFirst().orElse(null);
-		} catch(Exception ignored) {
-		}
+	 boolean parsing = false;
+	 for(Player player : Bukkit.getOnlinePlayers()) {
+		if(player == null || player.getName() == null) continue;
+		if(player.getName().toLowerCase().startsWith(s.toLowerCase()) && !player.getName().equalsIgnoreCase(s.toLowerCase()))
+		 parsing = true;
+		if(player.getUniqueId().toString().toLowerCase().startsWith(s.toLowerCase()) && !player.getUniqueId().toString().equalsIgnoreCase(s.toLowerCase()))
+		 parsing = true;
+		if(player.getName().equalsIgnoreCase(s) || player.getUniqueId().toString().equalsIgnoreCase(s))
+		 return new ParseResult<>(player, ParseResult.ParseStatus.PARSED);
 	 }
-	 if(player == null) throw new CommandException("Invalid player '" + s + "'");
-	 return player;
+	 if(!parsing) throw new CommandException("Invalid player '" + s + "'");
+	 return new ParseResult<>(null, ParseResult.ParseStatus.PARSING);
 	});
 
 
 	parser(OfflinePlayer.class, (i, s) -> {
-	 OfflinePlayer player = Stream.concat(Bukkit.getOnlinePlayers().stream(), Arrays.stream(Bukkit.getOfflinePlayers()))
-			.filter(p -> p.getName() != null)
-			.filter(p -> p.getName().equalsIgnoreCase(s)).findFirst().orElse(null);
-	 if(player == null) {
-		try {
-		 UUID id = UUID.fromString(s);
-		 player = Stream.concat(Bukkit.getOnlinePlayers().stream(), Arrays.stream(Bukkit.getOfflinePlayers()))
-				.filter(p -> p.getUniqueId().equals(id)).findFirst().orElse(null);
-		} catch(Exception ignored) {
-		}
+	 boolean parsing = false;
+	 for(OfflinePlayer player : Stream.concat(Bukkit.getOnlinePlayers().stream(), Arrays.stream(Bukkit.getOfflinePlayers())).collect(Collectors.toSet())) {
+		if(player == null || player.getName() == null) continue;
+		if(player.getName().toLowerCase().startsWith(s.toLowerCase()) && !player.getName().equalsIgnoreCase(s.toLowerCase()))
+		 parsing = true;
+		if(player.getUniqueId().toString().toLowerCase().startsWith(s.toLowerCase()) && !player.getUniqueId().toString().equalsIgnoreCase(s.toLowerCase()))
+		 parsing = true;
+		if(player.getName().equalsIgnoreCase(s) || player.getUniqueId().toString().equalsIgnoreCase(s))
+		 return new ParseResult<>(player, ParseResult.ParseStatus.PARSED);
 	 }
-	 if(player == null) throw new CommandException("Invalid player '" + s + "'");
-	 return player;
+	 if(!parsing) throw new CommandException("Invalid player '" + s + "'");
+	 return new ParseResult<>(null, ParseResult.ParseStatus.PARSING);
 	});
 	parser(Integer.class, (i, s) -> {
 	 try {
-		return Integer.parseInt(s);
+		return new ParseResult<>(Integer.parseInt(s), ParseResult.ParseStatus.PARSED);
 	 } catch(Exception e) {
 		throw new CommandException("Invalid integer '" + s + "'");
 	 }
 	});
 	parser(Double.class, (i, s) -> {
 	 try {
-		return Double.parseDouble(s);
+		return new ParseResult<>(Double.parseDouble(s), ParseResult.ParseStatus.PARSED);
 	 } catch(Exception e) {
 		throw new CommandException("Invalid double '" + s + "'");
 	 }
 	});
 	parser(Enum.class, (i, s) -> {
-	 for(Enum enumConstant : i.getEnumConstants()) {
+	 boolean parsing = false;
+	 for(Enum<?> enumConstant : i.getEnumConstants()) {
 		if(enumConstant == null) continue;
-		if(enumConstant.name().equalsIgnoreCase(s)) return enumConstant;
+		if(enumConstant.name().equalsIgnoreCase(s)) return new ParseResult<>(enumConstant, ParseResult.ParseStatus.PARSED);
+		if(!enumConstant.name().equalsIgnoreCase(s) && enumConstant.name().toLowerCase().startsWith(s.toLowerCase()))
+		 parsing = true;
 	 }
-	 throw new CommandException("Invalid " + i.getSimpleName() + " '" + s + "'");
-//	 try {
-//	 } catch(Exception e) {
-//		throw new CommandException("Invalid " + i.getSimpleName() + " '" + s + "'");
-//	 }
+	 if(!parsing)
+		throw new CommandException("Invalid " + i.getSimpleName() + " '" + s + "'");
+	 return new ParseResult<>(null, ParseResult.ParseStatus.PARSING);
 	});
 	parser(World.class, (i, s) -> {
-	 World world = Bukkit.getWorld(s);
-	 if(world == null) {
-		try {
-		 UUID id = UUID.fromString(s);
-		 world = Bukkit.getWorld(id);
-		} catch(Exception e) {
-		 throw new CommandException("Invalid uuid for world '" + s + "'");
-		}
+	 boolean parsing = false;
+	 for(World world : Bukkit.getWorlds()) {
+		if(world.getName().equalsIgnoreCase(s)) return new ParseResult<>(world, ParseResult.ParseStatus.PARSED);
+		if(!world.getName().equalsIgnoreCase(s) && world.getName().toLowerCase().startsWith(s.toLowerCase()))
+		 parsing = true;
+		if(world.getUID().toString().equalsIgnoreCase(s)) return new ParseResult<>(world, ParseResult.ParseStatus.PARSED);
+		if(!world.getUID().toString().equalsIgnoreCase(s) && world.getUID().toString().toLowerCase().startsWith(s.toLowerCase()))
+		 parsing = true;
 	 }
-	 if(world == null) throw new CommandException("Invalid world '" + s + "'");
-	 return world;
+	 if(!parsing) throw new CommandException("Invalid world '" + s + "'");
+	 return new ParseResult<>(null, ParseResult.ParseStatus.PARSING);
 	});
 	parser(Entity.class, (i, s) -> {
-	 Entity entity = Bukkit.getWorlds().stream()
-			.flatMap(w -> w.getEntities().stream())
-			.filter(a -> a.getCustomName() != null)
-			.filter(a -> CColor.stripColor(a.getCustomName()).equalsIgnoreCase(s))
-			.findFirst().orElse(null);
-	 if(entity == null) {
-		try {
-		 UUID id = UUID.fromString(s);
-		 entity = Bukkit.getWorlds().stream()
-				.flatMap(w -> w.getEntities().stream()).filter(e -> e.getUniqueId().equals(id)).findFirst().orElse(null);
-		} catch(Exception e) {
-		 throw new CommandException("Invalid uuid for entity '" + s + "'");
+	 boolean parsing = false;
+	 for(World world : Bukkit.getWorlds()) {
+		for(Entity entity : world.getEntities()) {
+		 if(entity.getCustomName() == null) continue;
+		 if(CColor.stripColor(entity.getCustomName()).equalsIgnoreCase(s))
+			return new ParseResult<>(entity, ParseResult.ParseStatus.PARSED);
+		 if(entity.getUniqueId().toString().equalsIgnoreCase(s))
+			return new ParseResult<>(entity, ParseResult.ParseStatus.PARSED);
+		 if(CColor.stripColor(entity.getCustomName()).toLowerCase().equalsIgnoreCase(s.toLowerCase()) && !CColor.stripColor(entity.getCustomName()).equalsIgnoreCase(s))
+			parsing = true;
+		 if(entity.getUniqueId().toString().toLowerCase().equalsIgnoreCase(s.toLowerCase()) && !entity.getUniqueId().toString().equalsIgnoreCase(s))
+			parsing = true;
 		}
 	 }
-	 if(entity == null) throw new CommandException("Invalid entity '" + s + "'");
-	 return entity;
+	 if(!parsing) throw new CommandException("Invalid entity '" + s + "'");
+	 return new ParseResult<>(null, ParseResult.ParseStatus.PARSING);
 	});
  }
 
@@ -397,13 +390,15 @@ public class DynamicCommandManager {
 	PARSER.put(clazz, function);
  }
 
+ @SuppressWarnings("unchecked")
  public static <T> T parse(Class<T> clazz, String input) throws CommandException {
 	if(clazz.getName().equalsIgnoreCase(String.class.getName())) return (T) input;
 	if(!PARSER.containsKey(clazz) && !PARSER.containsKey(clazz.getSuperclass()))
 	 throw new CommandException(ERROR_MESSAGE);
 	ParserFunction<T> parse = (ParserFunction<T>) PARSER.getOrDefault(clazz, PARSER.get(clazz.getSuperclass()));
 	try {
-	 return clazz.cast(parse.parse(clazz, input));
+	 ParseResult<T> result = parse.parse(clazz, input);
+	 return clazz.cast(result.value());
 	} catch(ClassCastException e) {
 	 throw new CommandException(ERROR_MESSAGE);
 	}
@@ -411,9 +406,11 @@ public class DynamicCommandManager {
 
  public static <T> boolean canParse(Class<T> clazz, String input) {
 	if(!PARSER.containsKey(clazz) && !PARSER.containsKey(clazz.getSuperclass())) return false;
+	ParserFunction<T> parse = (ParserFunction<T>) PARSER.getOrDefault(clazz, PARSER.get(clazz.getSuperclass()));
 	try {
-	 return parse(clazz, input) != null;
-	} catch(ClassCastException | CommandException e) {
+	 ParseResult<T> result = parse.parse(clazz, input);
+	 return !input.isEmpty() && (result.value() != null || result.status() == ParseResult.ParseStatus.PARSING);
+	} catch(CommandException e) {
 	 return false;
 	}
  }
@@ -436,6 +433,7 @@ public class DynamicCommandManager {
 	buildCommand(executor, arg, command, stack, false);
  }
 
+ @SuppressWarnings("unchecked")
  private static <T> boolean buildCommand(DynamicCommand executor, DynamicArgument<?> arg, LiteralArgumentBuilder<T> command, ArgumentBuilder<T, ?> stack, boolean previousHasProvider) {
 	ArgumentBuilder<T, ?> argCommand;
 	boolean hasProvider = true;
@@ -502,11 +500,27 @@ public class DynamicCommandManager {
 	 CommandSender sender = (CommandSender) getBukkit.invoke(ctx.getSource());
 	 String remainingLowerCase = suggestionsBuilder.getRemainingLowerCase();
 	 List<String> suggestions = new ArrayList<>();
-	 for(String s : (executor.tabComplete(sender, args[0], Arrays.copyOfRange(args, 1, args.length))))
-		if(!s.isEmpty() && s.toLowerCase().startsWith(remainingLowerCase) && suggestions.stream().noneMatch(s::equalsIgnoreCase))
+	 List<String> appends = new ArrayList<>();
+	 List<String> completions = executor.getCompletions(sender, args[0], Arrays.copyOfRange(args, 1, args.length));
+	 for(String s : completions) {
+		if(s.contains("§:")) appends.add(s);
+		else if(!s.isEmpty() && s.toLowerCase().startsWith(remainingLowerCase) && suggestions.stream().noneMatch(s::equalsIgnoreCase)) {
 		 suggestions.add(s);
+		}
+	 }
 	 for(String suggestion : suggestions) {
 		suggestionsBuilder.suggest(suggestion);
+	 }
+	 if(!appends.isEmpty()) {
+		for(String s : appends) {
+		 String text = s.substring(0, s.indexOf("§:"));
+		 String add = s.substring(s.indexOf("§:") + 2);
+		 SuggestionsBuilder append = suggestionsBuilder.createOffset(suggestionsBuilder.getStart() + text.length());
+		 String remaining = append.getRemainingLowerCase();
+		 if(!add.isEmpty() && add.toLowerCase().startsWith(remaining) && appends.stream().noneMatch(add::equalsIgnoreCase))
+			append.suggest(add);
+		 suggestionsBuilder.add(append);
+		}
 	 }
 	 return suggestionsBuilder.buildFuture();
 	} catch(IllegalAccessException | InvocationTargetException e) {
@@ -574,7 +588,7 @@ public class DynamicCommandManager {
 		 brigadier.removeChild(brigadier.getDispatcher().getRoot(), entry.getKey().toLowerCase());
 		 brigadier.removeChild(brigadier.getDispatcher().getRoot(), entry.getValue().getName().toLowerCase());
 		 for(String alias : entry.getValue().getAliases()) {
-		 brigadier.removeChild(brigadier.getDispatcher().getRoot(), alias.toLowerCase());
+			brigadier.removeChild(brigadier.getDispatcher().getRoot(), alias.toLowerCase());
 		 }
 		}
 	 }

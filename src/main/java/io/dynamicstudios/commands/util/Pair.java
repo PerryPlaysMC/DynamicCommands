@@ -1,6 +1,6 @@
 package io.dynamicstudios.commands.util;
 
-public class Pair<K,V> {
+public class Pair<K, V> {
 
  K key;
  V value;
@@ -15,7 +15,7 @@ public class Pair<K,V> {
 	return key;
  }
 
- public Pair<K,V> key(K key) {
+ public Pair<K, V> key(K key) {
 	this.key = key;
 	return this;
  }
@@ -24,7 +24,7 @@ public class Pair<K,V> {
 	return value;
  }
 
- public Pair<K,V> value(V value) {
+ public Pair<K, V> value(V value) {
 	this.value = value;
 	return this;
  }

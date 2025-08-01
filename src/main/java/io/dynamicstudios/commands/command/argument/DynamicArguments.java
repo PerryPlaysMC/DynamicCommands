@@ -1,8 +1,11 @@
 package io.dynamicstudios.commands.command.argument;
 
+import io.dynamicstudios.commands.DynamicCommandManager;
 import io.dynamicstudios.commands.command.argument.types.DynamicStringArgument;
 import io.dynamicstudios.commands.exceptions.CommandException;
 import org.bukkit.command.CommandSender;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -13,6 +16,7 @@ import java.util.*;
 public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 
 
+ private static final Logger log = LoggerFactory.getLogger(DynamicArguments.class);
  private final CommandSender sender;
  private final String[] inputs;
  private final List<DynamicArgument<?>> list;
@@ -44,7 +48,7 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	StringBuilder builder = new StringBuilder();
 //	builder.append("\n");
 	for(int i = 0; i < indent; i++) {
-		builder.append(" ");
+	 builder.append(" ");
 	}
 	builder.append(argument.name()).append(" ").append(argument.type().getSimpleName());
 	if(argument.subArguments.isEmpty()) {
@@ -72,7 +76,7 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 		if(arg.matches("^\\\"(?<data>(?:(?=\\\\\\\")..|(?!\\\").)*)\\\"$") || depth + increase > args.length) break;
 		increase++;
 	 }
-	}else increase = arg.split(" ").length;
+	} else increase = arg.split(" ").length;
 	if(!argument.isValid(arg))
 	 return false;
 	if(arg.isEmpty()) return false;
@@ -136,6 +140,9 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 
  public <T> T getOrDefault(Class<T> type, String name, T defaultValue) throws CommandException {
 	if(!argumentTypes.containsKey(name) || !argumentTypes.get(name).getName().equals(type.getName())) return defaultValue;
+	if(!key.containsKey(name) || (key.get(name).type() != type && key.get(name).type().isAssignableFrom(String.class))) {
+	 return DynamicCommandManager.parse(type, arguments.get(name.toLowerCase()));
+	}
 	return type.cast(key.get(name).parse(sender, arguments.get(name.toLowerCase())));
  }
 
@@ -151,7 +158,9 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 
  public <T> T getOrDefault(String name, T defaultValue) throws CommandException {
 	if(!argumentTypes.containsKey(name.toLowerCase())) return defaultValue;
-	if(!key.containsKey(name.toLowerCase())) return defaultValue;
+	if(!key.containsKey(name.toLowerCase())) {
+	 return defaultValue;
+	}
 	return (T) key.get(name.toLowerCase()).parse(sender, arguments.get(name.toLowerCase()));
  }
 

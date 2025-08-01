@@ -4,6 +4,7 @@ import io.dynamicstudios.commands.command.argument.types.*;
 import org.bukkit.command.CommandSender;
 
 import java.util.Collection;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -559,9 +560,8 @@ public class DynamicArgumentBuilder {
  }
 
 
-
  public DynamicArgumentBuilder suggestions(Supplier<Collection<String>> suggestions) {
-	if(this.base.subArguments.isEmpty()){
+	if(this.base.subArguments.isEmpty()) {
 	 this.base.suggestions(suggestions);
 	 return this;
 	}
@@ -570,8 +570,27 @@ public class DynamicArgumentBuilder {
  }
 
 
+ public DynamicArgumentBuilder suggestionsAppend(Function<String, Collection<String>> suggestions) {
+	if(this.base.subArguments.isEmpty()) {
+	 this.base.suggestionsAppend(suggestions);
+	 return this;
+	}
+	this.base.subArguments.get(this.base.subArguments.size() - 1).suggestionsAppend(suggestions);
+	return this;
+ }
+
+
  public DynamicArgumentBuilder suggestions(Function<CommandSender, Collection<String>> suggestions) {
-	if(this.base.subArguments.isEmpty()){
+	if(this.base.subArguments.isEmpty()) {
+	 this.base.suggestions(suggestions);
+	 return this;
+	}
+	this.base.subArguments.get(this.base.subArguments.size() - 1).suggestions(suggestions);
+	return this;
+ }
+
+ public DynamicArgumentBuilder suggestions(BiFunction<CommandSender, DynamicArguments, Collection<String>> suggestions) {
+	if(this.base.subArguments.isEmpty()) {
 	 this.base.suggestions(suggestions);
 	 return this;
 	}
@@ -591,7 +610,7 @@ public class DynamicArgumentBuilder {
 
 
  public DynamicArgumentBuilder executes(ArgumentExecutor executor) {
-	if(this.base.subArguments.isEmpty()){
+	if(this.base.subArguments.isEmpty()) {
 	 this.base.executes(executor);
 	 return this;
 	}
@@ -600,7 +619,7 @@ public class DynamicArgumentBuilder {
  }
 
  public DynamicArgumentBuilder retains(boolean retains) {
-	if(this.base.subArguments.isEmpty()){
+	if(this.base.subArguments.isEmpty()) {
 	 this.base.retains(retains);
 	 return this;
 	}
@@ -619,7 +638,7 @@ public class DynamicArgumentBuilder {
 
 
  public DynamicArgumentBuilder optional(boolean optional) {
-	if(this.base.subArguments.isEmpty()){
+	if(this.base.subArguments.isEmpty()) {
 	 this.base.optional(optional);
 	 return this;
 	}
@@ -628,7 +647,7 @@ public class DynamicArgumentBuilder {
  }
 
  public DynamicArgumentBuilder helpDescription(String helpDescription) {
-	if(this.base.subArguments.isEmpty()){
+	if(this.base.subArguments.isEmpty()) {
 	 this.base.helpDescription(helpDescription);
 	 return this;
 	}

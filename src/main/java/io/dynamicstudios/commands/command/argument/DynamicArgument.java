@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -35,6 +36,8 @@ public abstract class DynamicArgument<T> {
  public boolean optional = true;
  private ArgumentPredicate predicate = (s, arg) -> {
  };
+ private Function<String, Collection<String>> appendSuggestions;
+ private BiFunction<CommandSender, DynamicArguments, Collection<String>> dynamicArguments;
 
  public DynamicArgument(String name, String description, DynamicArgument<?>... subArguments) {
 	this(null, name, description, subArguments);
@@ -61,7 +64,7 @@ public abstract class DynamicArgument<T> {
 
  public DynamicArgument parent(Predicate<DynamicArgument<?>> predicate) {
 	DynamicArgument parent = this.parent;
-	 if(parent == null || predicate.test(parent)) return parent;
+	if(parent == null || predicate.test(parent)) return parent;
 	while(parent != null) {
 	 if(parent.parent == null || predicate.test(parent.parent)) return parent.parent;
 	 parent = parent.parent;
@@ -203,6 +206,14 @@ public abstract class DynamicArgument<T> {
 	return senderSuggestions == null ? null : new ArrayList<>(senderSuggestions.apply(sender));
  }
 
+ public List<String> suggestions(String input) {
+	return appendSuggestions == null || appendSuggestions.apply(input) == null ? null : new ArrayList<>(appendSuggestions.apply(input));
+ }
+
+ public List<String> suggestions(CommandSender sender, DynamicArguments input) {
+	return dynamicArguments == null || dynamicArguments.apply(sender, input) == null ? null : new ArrayList<>(dynamicArguments.apply(sender, input));
+ }
+
  public ArgumentExecutor executes() {
 	return executor;
  }
@@ -226,6 +237,17 @@ public abstract class DynamicArgument<T> {
 
  public DynamicArgument<T> suggestions(Function<CommandSender, Collection<String>> senderSuggestions) {
 	this.senderSuggestions = senderSuggestions;
+	return this;
+ }
+
+
+ public DynamicArgument<T> suggestions(BiFunction<CommandSender, DynamicArguments, Collection<String>> dynamicArguments) {
+	this.dynamicArguments = dynamicArguments;
+	return this;
+ }
+
+ public DynamicArgument<T> suggestionsAppend(Function<String, Collection<String>> appendSuggestions) {
+	this.appendSuggestions = appendSuggestions;
 	return this;
  }
 
@@ -321,7 +343,7 @@ public abstract class DynamicArgument<T> {
  public int length() {
 	int length = subArguments.size();
 	for(DynamicArgument<?> subArgument : subArguments) {
-	 length+=subArgument.length();
+	 length += subArgument.length();
 	}
 	return length;
  }
