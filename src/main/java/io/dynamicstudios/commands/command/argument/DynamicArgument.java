@@ -36,6 +36,8 @@ public abstract class DynamicArgument<T> {
  public boolean optional = true;
  private ArgumentPredicate predicate = (s, arg) -> {
  };
+ private TabArgumentPredicate tabPredicate = (s, arg) -> {
+ };
  private Function<String, Collection<String>> appendSuggestions;
  private BiFunction<CommandSender, DynamicArguments, Collection<String>> dynamicArguments;
 
@@ -198,6 +200,11 @@ public abstract class DynamicArgument<T> {
 	} : predicate;
  }
 
+ public TabArgumentPredicate tabPredicate() {
+	return tabPredicate == null ? (s, arg) -> {
+	} : tabPredicate;
+ }
+
  public List<String> suggestions() {
 	return suggestions == null ? null : new ArrayList<>(suggestions.get());
  }
@@ -253,6 +260,11 @@ public abstract class DynamicArgument<T> {
 
  public DynamicArgument<T> predicate(ArgumentPredicate predicate) {
 	this.predicate = predicate;
+	return this;
+ }
+
+ public DynamicArgument<T> tabPredicate(TabArgumentPredicate tabPredicate) {
+	this.tabPredicate = tabPredicate;
 	return this;
  }
 
@@ -329,13 +341,27 @@ public abstract class DynamicArgument<T> {
 
  @Override
  public String toString() {
-	return "DynamicArgument{" +
-		 "name='" + name + '\'' +
-		 ", description='" + description + '\'' +
-		 ", subArguments=" + subArguments +
-		 ", aliases=" + Arrays.toString(aliases) +
-		 ", type=" + type +
-		 '}';
+	return print(0);
+ }
+
+ public String print(int indent) {
+	StringBuilder indentStr = new StringBuilder();
+	for(int i = 0; i < indent; i++) {
+	 indentStr.append(" ");
+	}
+	StringBuilder key = new StringBuilder(indentStr + "{\n");
+	key.append(indentStr).append(" \"name\":\"").append(name).append("\",\n");
+	key.append(indentStr).append(" \"description\":\"").append(description).append("\",\n");
+	key.append(indentStr).append(" \"subArguments\":[");
+	int index = 0;
+	for(DynamicArgument<?> subArgument : subArguments) {
+	 key.append(index > 0 ? "," : "").append("\n").append(subArgument.print(indent + 1));
+	 index++;
+	}
+	if(subArguments.isEmpty()) key.append("]");
+	else key.append("\n").append(indentStr).append(" ]");
+	key.append("\n").append(indentStr).append("}");
+	return key.toString();
  }
 
  public abstract boolean isValid(String input);

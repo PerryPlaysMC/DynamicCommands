@@ -609,6 +609,17 @@ public class DynamicArgumentBuilder {
  }
 
 
+
+ public DynamicArgumentBuilder tabPredicate(TabArgumentPredicate tabPredicate) {
+	if(this.base.subArguments.isEmpty()) {
+	 this.base.tabPredicate(tabPredicate);
+	 return this;
+	}
+	this.base.subArguments.get(this.base.subArguments.size() - 1).tabPredicate(tabPredicate);
+	return this;
+ }
+
+
  public DynamicArgumentBuilder executes(ArgumentExecutor executor) {
 	if(this.base.subArguments.isEmpty()) {
 	 this.base.executes(executor);
@@ -660,5 +671,8 @@ public class DynamicArgumentBuilder {
 	 this.base.retains(true);
 	return base;
  }
+
+
+
 
 }

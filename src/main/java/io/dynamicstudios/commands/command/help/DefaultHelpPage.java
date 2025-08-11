@@ -3,13 +3,18 @@ package io.dynamicstudios.commands.command.help;
 import io.dynamicstudios.commands.DynamicCommandManager;
 import io.dynamicstudios.commands.command.DynamicCommand;
 import io.dynamicstudios.commands.command.argument.DynamicArgument;
+import io.dynamicstudios.commands.command.argument.DynamicArguments;
 import io.dynamicstudios.commands.exceptions.CommandException;
 import io.dynamicstudios.json.DynamicJText;
+import io.dynamicstudios.json.JsonBuilder;
 import io.dynamicstudios.json.data.component.IComponent;
 import io.dynamicstudios.json.data.util.CColor;
+import io.dynamicstudios.json.data.util.DynamicStyle;
 import org.bukkit.command.CommandSender;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -22,7 +27,7 @@ public class DefaultHelpPage extends HelpPage {
 	List<Map.Entry<String, String>> subCommand = new ArrayList<>();
 	DynamicArgument<?>[] arr = Arrays.stream(command.rawArguments()).filter(c -> {
 	 try {
-		c.predicate().test(sender, c.name());
+		c.predicate().test(sender, "");
 		return true;
 	 } catch(CommandException e) {
 		return false;
@@ -45,7 +50,12 @@ public class DefaultHelpPage extends HelpPage {
 	DynamicJText msg = new DynamicJText("\n\n\n\n\n")
 		 .add("[c]Showing help for /[i]" + commandName).suggest("/" + commandName);
 	msg.add("\n[c]Aliases: [i]" + aliases);
-	msg.add("\n[c]Page [i]" + (page + 1) + "[c]/[i]" + pages.size());
+ 	msg.add("\n[c]Page [i]" + (page + 1) + "[c]/[i]" + pages.size() + " ");
+	if(page == 0) msg.add("&l&8&m«&r");
+	else msg.add("&l[i]«").hover("[c]Click to go to previous page").command(command.getName() + " help " + (page));
+	msg.add(" ").disableStyles(DynamicStyle.STRIKETHROUGH);
+	if(page == pages.size()-1) msg.add("&l&8&m»&r");
+	else msg.add("&l[i]»").hover("[c]Click to go to next page").command(command.getName() + " help " + (page + 2));
 	msg.add("\n[c]&l&m---------------------&r");
 	List<Map.Entry<String, String>> commandsToDisplay = subCommand.subList(page * pageSize, Math.min((page * pageSize) + pageSize, subCommand.size()));
 	for(Map.Entry<String, String> name : commandsToDisplay) {
@@ -55,7 +65,7 @@ public class DefaultHelpPage extends HelpPage {
 	 ;
 	}
 	msg.add("\n[c]&l&m---------------------");
-	msg.send(sender);
+	msg.sendChat(sender);
  }
 
 }

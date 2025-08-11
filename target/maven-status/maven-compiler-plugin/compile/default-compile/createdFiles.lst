@@ -49,6 +49,7 @@ io/dynamicstudios/commands/util/ParserFunction.class
 io/dynamicstudios/commands/exceptions/brigadier/CommandSyntaxException.class
 io/dynamicstudios/commands/command/argument/types/helper/Vec3D.class
 io/dynamicstudios/commands/command/DynamicCommand.class
+io/dynamicstudios/commands/util/PlayerData.class
 io/dynamicstudios/commands/command/annotation/OptionalArgument.class
 io/dynamicstudios/commands/exceptions/CommandNotImplementedException.class
 io/dynamicstudios/commands/brigadier/registration/ReflectionBrigadier$ServerReloadListener.class
@@ -69,6 +70,7 @@ io/dynamicstudios/commands/command/argument/DynamicArgumentBuilder.class
 io/dynamicstudios/commands/exceptions/CommandException.class
 io/dynamicstudios/commands/command/argument/types/DynamicStringArgument.class
 io/dynamicstudios/commands/brigadier/registration/ReflectionBrigadier$1.class
+io/dynamicstudios/commands/command/argument/TabArgumentPredicate.class
 io/dynamicstudios/commands/command/argument/types/helper/Direction.class
 io/dynamicstudios/commands/command/help/HelpPage.class
 io/dynamicstudios/commands/exceptions/brigadier/LiteralMessage.class

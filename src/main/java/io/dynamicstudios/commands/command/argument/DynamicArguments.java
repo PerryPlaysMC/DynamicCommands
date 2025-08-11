@@ -24,6 +24,7 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
  private final HashMap<String, DynamicArgument<?>> key;
  private final HashMap<String, Class<?>> argumentTypes;
  private final HashMap<String, Integer> argumentsSpan;
+ private final DynamicArgument<?> startingArgument;
 
  public DynamicArguments(CommandSender sender, DynamicArgument<?>[] arguments, String[] args) {
 	this.sender = sender;
@@ -34,14 +35,22 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	this.argumentTypes = new LinkedHashMap<>();
 	this.argumentsSpan = new LinkedHashMap<>();
 	for(DynamicArgument<?> argument : arguments) {
-	 if(loadArguments(argument, 0, args)) break;
+	 if(loadArguments(argument, 0, args)) {
+		startingArgument = argument;
+		return;
+	 }
 	}
+	startingArgument = null;
 //	for(DynamicArgument<?> argument : arguments)
 //	 System.out.println(printArgs(argument, 0));
 //	System.out.println(sender.getName());
 //	System.out.println("a");
 //	System.out.println(this.arguments);
 //	System.out.println(String.join(" ", args));
+ }
+
+ public DynamicArgument<?> startingArgument() {
+	return startingArgument;
  }
 
  public String printArgs(DynamicArgument<?> argument, int indent) {
@@ -226,5 +235,9 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 
  public Map<String, DynamicArgument<?>> getArguments() {
 	return this.key;
+ }
+
+ public HashMap<String, DynamicArgument<?>> keys() {
+	return key;
  }
 }

@@ -92,7 +92,6 @@ public class BrigadierTypes {
 	RESOURCE_KEY = null;//MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.minecraft("resource_key"));
 	LOOT_TABLE = null; //MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.minecraft("loot_table"));
 	LOOT_PREDICATE = null; //MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.minecraft("loot_predicate"));
-
 	BOOL = MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.fromString("brigadier:bool"));
 	FLOAT = MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.fromString("brigadier:float"));
 	DOUBLE = MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.fromString("brigadier:double"));

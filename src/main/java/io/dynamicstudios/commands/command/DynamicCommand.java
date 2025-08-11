@@ -186,14 +186,6 @@ public abstract class DynamicCommand extends Command {
 	return this;
  }
 
- private DynamicArgument<?> argument(CommandSender sender, DynamicArguments arguments) {
-	for(DynamicArgument<?> rawArgument : rawArguments) {
-	 if(arguments.hasArgument(rawArgument.name())) return rawArgument;
-	}
-	return null;
- }
-
-
  public boolean run(CommandSender sender, String label, DynamicArguments arguments) throws CommandException {
 	throw new CommandException("Not implemented");
  }
@@ -212,7 +204,7 @@ public abstract class DynamicCommand extends Command {
 		collectInputs(sender, args, arguments, 0, result, argument);
 	 }
 	} else {
-	 DynamicArgument<?> argument = argument(sender, arguments);
+	 DynamicArgument<?> argument = arguments.startingArgument();
 	 if(argument == null) return result;
 	 result.addAll(argumentNames(sender, arguments, Arrays.copyOfRange(args, 1, args.length), argument, 0));
 	 if(!result.isEmpty()) return result;
@@ -240,13 +232,13 @@ public abstract class DynamicCommand extends Command {
 		valid.add(dynamicArgument.name());
 	 }
 	}
-	if(valid.isEmpty()) return result;
 	if(argument.subArguments().length == 0) {
 	 if(argument instanceof DynamicStringArgument && argument.span() == -1) {
 		collectInputs(sender, args, arguments, 0, result, argument);
 		return result;
 	 }
 	}
+	if(valid.isEmpty()) return result;
 	for(DynamicArgument<?> dynamicArgument : argument.subArguments()) {
 	 if(!valid.contains(dynamicArgument.name())) {
 		continue;
@@ -259,7 +251,7 @@ public abstract class DynamicCommand extends Command {
 	 }
 	 String join = join(Arrays.copyOfRange(args, depth, Math.min(args.length, depth + (dynamicArgument.span() == -1 ? 256 : dynamicArgument.span()))));
 	 if(dynamicArgument.isValid(join)) {
-		if(testPredicate(sender, args, dynamicArgument)) continue;
+		if(testPredicate(sender, dynamicArgument)) continue;
 		if(dynamicArgument.span() > 1) {
 		 for(int i = 0; i < dynamicArgument.span(); i++) {
 			if(depth + i == args.length - 1) {
@@ -269,23 +261,18 @@ public abstract class DynamicCommand extends Command {
 		 if(depth + (dynamicArgument.span()) < args.length)
 			if(dynamicArgument.subArguments().length > 0)
 			 result.addAll(argumentNames(sender, arguments, args, dynamicArgument, depth + dynamicArgument.span()));
-		} else result.addAll(argumentNames(sender, arguments, args, dynamicArgument, depth + 1));
+		} else {
+		 result.addAll(argumentNames(sender, arguments, args, dynamicArgument, depth + 1));
+		}
 		if(!result.isEmpty()) break;
 	 }
-//	 else {
-////		if(arguments.hasArgument(dynamicArgument.parent().name())) {
-////		 List<String> f = new ArrayList<>();
-////		 collectInputs(sender, args, arguments, 0, f, dynamicArgument);
-////		 System.out.println("Collecting: " + dynamicArgument.name() + ": " + f);
-////		}
-//	 }
 	}
 	return result;
  }
 
- private static boolean testPredicate(CommandSender sender, String[] args, DynamicArgument<?> dynamicArgument) {
+ private static boolean testPredicate(CommandSender sender, DynamicArgument<?> dynamicArgument) {
 	try {
-	 dynamicArgument.predicate().test(sender, args[args.length - 1]);
+	 dynamicArgument.predicate().test(sender, "");
 	} catch(Exception e) {
 	 return true;
 	}
@@ -293,7 +280,12 @@ public abstract class DynamicCommand extends Command {
  }
 
  private void collectInputs(CommandSender sender, String[] args, DynamicArguments arguments, int index, List<String> result, DynamicArgument<?> dynamicArgument) {
-	if(testPredicate(sender, args, dynamicArgument)) return;
+	if(testPredicate(sender, dynamicArgument)) return;
+	try {
+	 dynamicArgument.tabPredicate().test(sender, arguments);
+	} catch(Exception e) {
+	 return;
+	}
 	List<String> suggestions = dynamicArgument.suggestions();
 	if(suggestions == null) {
 	 if(dynamicArgument.suggestions(sender) != null)
@@ -314,8 +306,7 @@ public abstract class DynamicCommand extends Command {
 	}
 	for(String suggestion : suggestions) {
 	 if(dynamicArgument instanceof DynamicStringArgument && dynamicArgument.span() == -1) {
-		String key = suggestion;
-		appendValue(key, args, result);
+		appendValue(suggestion, args, result);
 		continue;
 	 }
 	 String[] options = suggestion.split(" ");
@@ -374,6 +365,12 @@ public abstract class DynamicCommand extends Command {
 		sender.sendMessage("§cOnly players may perform this command");
 		return true;
 	 }
+	 if(e instanceof CommandException) {
+		if(((CommandException) e).isCustom()) {
+		 sender.sendMessage(e.getMessage());
+		 return true;
+		}
+	 }
 	 sender.sendMessage("§4Error while executing command\n§c" + e.getMessage());
 	 return true;
 	}
@@ -385,7 +382,6 @@ public abstract class DynamicCommand extends Command {
 	arguments.test(sender, args);
 	int i = 0;
 	int size = 0;
-	int initialSize = 0;
 	boolean didExecute = false, retains = false;
 	for(DynamicArgument<?> argument : arguments) {
 	 if(argument.executes() != null) {

@@ -18,6 +18,7 @@ import io.dynamicstudios.commands.command.help.HelpPage;
 import io.dynamicstudios.commands.exceptions.CommandException;
 import io.dynamicstudios.commands.util.ParseResult;
 import io.dynamicstudios.commands.util.ParserFunction;
+import io.dynamicstudios.commands.util.PlayerData;
 import io.dynamicstudios.json.data.util.CColor;
 import io.dynamicstudios.json.data.util.packet.ReflectionUtils;
 import org.bukkit.Bukkit;
@@ -229,7 +230,7 @@ public class DynamicCommandManager {
 	suggestions(Player.class, () -> Bukkit.getOnlinePlayers().stream().map(Player::getName).distinct().collect(Collectors.toList()));
 
 	suggestions(OfflinePlayer.class, () -> Stream.concat(Bukkit.getOnlinePlayers().stream().map(Player::getName),
-		 Stream.of(Bukkit.getOfflinePlayers()).map(OfflinePlayer::getName)).distinct().collect(Collectors.toList()));
+		 PlayerData.getOfflinePlayersName().keySet().stream()).distinct().collect(Collectors.toList()));
 	suggestions(World.class, () -> Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()));
 	suggestions(Enum.class, i -> Arrays.stream(i.getEnumConstants()).map(Enum::name).map(String::toLowerCase).collect(Collectors.toList()));
 	senderSuggestions(Location.class, p -> {
@@ -315,7 +316,7 @@ public class DynamicCommandManager {
 
 	parser(OfflinePlayer.class, (i, s) -> {
 	 boolean parsing = false;
-	 for(OfflinePlayer player : Stream.concat(Bukkit.getOnlinePlayers().stream(), Arrays.stream(Bukkit.getOfflinePlayers())).collect(Collectors.toSet())) {
+	 for(OfflinePlayer player : Stream.concat(Bukkit.getOnlinePlayers().stream(), PlayerData.getOfflinePlayersName().values().stream()).collect(Collectors.toSet())) {
 		if(player == null || player.getName() == null) continue;
 		if(player.getName().toLowerCase().startsWith(s.toLowerCase()) && !player.getName().equalsIgnoreCase(s.toLowerCase()))
 		 parsing = true;
@@ -574,6 +575,7 @@ public class DynamicCommandManager {
  public static ReflectionBrigadier getBrigadier(Plugin plugin, String fallback) {
 	fallback = fallback == null ? plugin.getName().toLowerCase() : fallback;
 	return BRIGADIERS.computeIfAbsent(fallback, c -> {
+	 PlayerData.register(plugin);
 	 ReflectionBrigadier brigadier = new ReflectionBrigadier(plugin);
 	 brigadier.ensureSetup();
 	 for(Map.Entry<String, org.bukkit.command.Command> entry : new HashMap<>(getKnownCommands()).entrySet()) {
