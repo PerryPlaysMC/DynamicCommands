@@ -13,6 +13,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Creator: PerryPlaysMC
@@ -93,6 +94,10 @@ public abstract class DynamicArgument<T> {
 
  public static DynamicLiteral literal(String name, String description) {
 	return DynamicLiteral.of(name, description);
+ }
+
+ public static List<DynamicLiteral> multiliteral(List<String> names, String description) {
+	return new ArrayList<>(names.stream().map(name -> DynamicLiteral.of(name, description)).collect(Collectors.toList()));
  }
 
  public static DynamicStringArgument limited(String name, String description, int length) {

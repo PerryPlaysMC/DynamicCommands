@@ -184,9 +184,18 @@ public class DynamicCommandManager {
 	 e.printStackTrace();
 	}
  }
+ private static boolean hasUnbrokenChainOfNoExecutors(DynamicArgument<?>... args) {
+	if(args == null)return true;
+	for(DynamicArgument<?> arg : args) {
+	 if(arg.executes() == null && hasUnbrokenChainOfNoExecutors(arg.subArguments())) return true;
+	}
+	return false;
+ }
 
  private static void buildBrigadier(DynamicCommand command, LiteralArgumentBuilder<?> brigadierCommand) {
-	executes(command, brigadierCommand);
+	if(hasUnbrokenChainOfNoExecutors(command.getArguments())) {
+	 executes(command, brigadierCommand);
+	}
 	boolean previousHasProvider = false;
 	for(DynamicArgument<?> dynamicArgument : command.getArguments()) {
 	 boolean has = buildCommand(command, dynamicArgument, brigadierCommand, null, previousHasProvider);
@@ -456,8 +465,13 @@ public class DynamicCommandManager {
 	 DynamicIntegerArgument iArg = (DynamicIntegerArgument) arg;
 	 argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.RANGE2_INTEGER.apply(iArg.min(), iArg.max()));
 	} else if(arg instanceof DynamicBooleanArgument) {
-	 argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.BOOL);
-	} else argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.String.STRING);
+	 for(String val : Arrays.asList("yes", "no","true", "false")) {
+		argCommand = LiteralArgumentBuilder.literal(val);
+		argCommand = requires(arg, argCommand);
+		applyExecutor(executor, arg, command, stack, argCommand);
+	 }
+	 return hasProvider;
+	} else argCommand = RequiredArgumentBuilder.argument(arg.name(), arg.span() == -2 ? BrigadierTypes.String.GREEDY : BrigadierTypes.String.STRING);
 	if(arg instanceof DynamicStringArgument) {
 	 if(arg.span() == -1 || arg.span() == 1) {
 		argCommand = RequiredArgumentBuilder.argument(arg.name(), arg.span() == 1 ? BrigadierTypes.String.STRING : BrigadierTypes.String.GREEDY);
@@ -493,6 +507,12 @@ public class DynamicCommandManager {
  }
 
  private static <T> CompletableFuture<Suggestions> provideSuggestions(DynamicCommand executor, CommandContext<T> ctx, SuggestionsBuilder suggestionsBuilder) {
+	int index = suggestionsBuilder.getInput().contains(executor.getName()) ? suggestionsBuilder.getInput().indexOf(executor.getName()) : Integer.MAX_VALUE;
+	for(String alias : executor.aliases()) {
+	 if(suggestionsBuilder.getInput().contains(alias))
+	 	index = Math.min(index, suggestionsBuilder.getInput().indexOf(alias));
+	}
+	String input = suggestionsBuilder.getInput().substring(index);
 	String[] args = suggestionsBuilder.getInput().substring(1).split(" ", -1);
 	suggestionsBuilder = suggestionsBuilder.createOffset(suggestionsBuilder.getInput().lastIndexOf(' ') + 1);
 	Method getBukkit = ReflectionUtils.getMethod(ctx.getSource().getClass(), CommandSender.class);
@@ -562,7 +582,12 @@ public class DynamicCommandManager {
 	 if(getBukkit == null) return 0;
 	 try {
 		CommandSender sender = (CommandSender) getBukkit.invoke(ctx.getSource());
-		String[] args = ctx.getInput().split(" ");
+		int index = ctx.getInput().contains(executor.getName()) ? ctx.getInput().indexOf(executor.getName()) : Integer.MAX_VALUE;
+		for(String alias : executor.aliases()) {
+		 if(ctx.getInput().contains(alias))
+			index = Math.min(index, ctx.getInput().indexOf(alias));
+		}
+		String[] args = ctx.getInput().substring(index).split(" ");
 		if(executor.execute(sender, args[0], Arrays.copyOfRange(args, 1, args.length))) return 1;
 		else return 0;
 	 } catch(IllegalAccessException | InvocationTargetException e) {

@@ -5,9 +5,10 @@ import io.dynamicstudios.commands.exceptions.CommandException;
 import org.bukkit.command.CommandSender;
 
 public class DynamicStringArgument extends DynamicArgument<String> {
-
+ private final StringType stringType;
  public DynamicStringArgument(String name, String description, StringType type, DynamicArgument<?>... subArguments) {
 	super(String.class, name, description, subArguments);
+	this.stringType = type;
 	span(type == StringType.GREEDY ? -1 : 1);
  }
 
@@ -28,6 +29,12 @@ public class DynamicStringArgument extends DynamicArgument<String> {
 
  @Override
  public String parse(CommandSender sender, String input) throws CommandException {
+	if(stringType == StringType.WORD) {
+	 if(input.startsWith("\"") && input.endsWith("\"")) {
+		input = input.substring(1, input.length() - 1)
+			 .replaceAll("\\\\\"", "\"");
+	 }
+	}
 	return input;
  }
 

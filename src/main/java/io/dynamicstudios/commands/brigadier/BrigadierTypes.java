@@ -2,8 +2,8 @@ package io.dynamicstudios.commands.brigadier;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import io.dynamicstudios.json.Version;
-import io.dynamicstudios.reflectionutils.DynamicClass;
-import io.dynamicstudios.reflectionutils.DynamicLookup;
+import io.dynamicstudios.reflection.DynamicClass;
+import io.dynamicstudios.reflection.DynamicLookup;
 import org.bukkit.NamespacedKey;
 
 import java.util.function.BiFunction;

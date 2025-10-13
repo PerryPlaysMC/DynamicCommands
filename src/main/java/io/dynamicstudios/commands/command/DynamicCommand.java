@@ -10,6 +10,8 @@ import io.dynamicstudios.commands.exceptions.CommandException;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginIdentifiableCommand;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
@@ -20,7 +22,7 @@ import java.util.stream.IntStream;
  * Creator: PerryPlaysMC
  * Created: 08/2022
  **/
-public abstract class DynamicCommand extends Command {
+public abstract class DynamicCommand extends Command implements PluginIdentifiableCommand {
 
  private final List<String> aliases;
  protected final DynamicArgument<?>[] rawArguments;
@@ -60,6 +62,22 @@ public abstract class DynamicCommand extends Command {
  }
 
  public DynamicCommand(JavaPlugin plugin, String name, List<String> aliases, boolean autoGenerateHelp, DynamicArgumentBuilder... arguments) {
+	this(plugin, name, aliases.toArray(new String[0]), autoGenerateHelp, arguments);
+ }
+
+ public DynamicCommand(JavaPlugin plugin, String name, String[] aliases, boolean autoGenerateHelp, Collection<DynamicArgumentBuilder> arguments) {
+	this(plugin, name, aliases, autoGenerateHelp, arguments.stream().map(DynamicArgumentBuilder::build).collect(Collectors.toList()).toArray(new DynamicArgument[0]));
+ }
+
+ public DynamicCommand(JavaPlugin plugin, String name, List<String> aliases, Collection<DynamicArgumentBuilder> arguments) {
+	this(plugin, name, aliases, true, arguments);
+ }
+
+ public DynamicCommand(JavaPlugin plugin, String name, String[] aliases, Collection<DynamicArgumentBuilder> arguments) {
+	this(plugin, name, aliases, true, arguments);
+ }
+
+ public DynamicCommand(JavaPlugin plugin, String name, List<String> aliases, boolean autoGenerateHelp, Collection<DynamicArgumentBuilder> arguments) {
 	this(plugin, name, aliases.toArray(new String[0]), autoGenerateHelp, arguments);
  }
 
@@ -187,7 +205,10 @@ public abstract class DynamicCommand extends Command {
  }
 
  public boolean run(CommandSender sender, String label, DynamicArguments arguments) throws CommandException {
-	throw new CommandException("Not implemented");
+	if(arguments.length() == 0) throw new CommandException("Not implemented");
+	int page = 0;
+	DynamicCommandManager.HELP_PAGE.help(sender, this, page);
+	return true;
  }
 
  @Override
@@ -227,13 +248,13 @@ public abstract class DynamicCommand extends Command {
 	List<String> valid = new ArrayList<>();
 	for(DynamicArgument<?> dynamicArgument : argument.subArguments()) {
 	 if(depth > args.length) continue;
-	 String key = join(Arrays.copyOfRange(args, depth, Math.min(args.length, depth + (dynamicArgument.span() == -1 ? 256 : dynamicArgument.span()))));
+	 String key = join(Arrays.copyOfRange(args, depth, Math.min(args.length, depth + (dynamicArgument.span() == -1 || dynamicArgument.span() == -2 ? 256 : dynamicArgument.span()))));
 	 if(key.isEmpty() || dynamicArgument.isValid(key)) {
 		valid.add(dynamicArgument.name());
 	 }
 	}
 	if(argument.subArguments().length == 0) {
-	 if(argument instanceof DynamicStringArgument && argument.span() == -1) {
+	 if((argument instanceof DynamicStringArgument && argument.span() == -1) || argument.span() == -2) {
 		collectInputs(sender, args, arguments, 0, result, argument);
 		return result;
 	 }
@@ -249,7 +270,7 @@ public abstract class DynamicCommand extends Command {
 		}
 		if(!result.isEmpty()) continue;
 	 }
-	 String join = join(Arrays.copyOfRange(args, depth, Math.min(args.length, depth + (dynamicArgument.span() == -1 ? 256 : dynamicArgument.span()))));
+	 String join = join(Arrays.copyOfRange(args, depth, Math.min(args.length, depth + (dynamicArgument.span() == -1 || dynamicArgument.span() == -2 ? 256 : dynamicArgument.span()))));
 	 if(dynamicArgument.isValid(join)) {
 		if(testPredicate(sender, dynamicArgument)) continue;
 		if(dynamicArgument.span() > 1) {
@@ -305,7 +326,7 @@ public abstract class DynamicCommand extends Command {
 	 return;
 	}
 	for(String suggestion : suggestions) {
-	 if(dynamicArgument instanceof DynamicStringArgument && dynamicArgument.span() == -1) {
+	 if((dynamicArgument instanceof DynamicStringArgument && dynamicArgument.span() == -1) || dynamicArgument.span() == -2) {
 		appendValue(suggestion, args, result);
 		continue;
 	 }
@@ -371,6 +392,7 @@ public abstract class DynamicCommand extends Command {
 		 return true;
 		}
 	 }
+	 e.printStackTrace();
 	 sender.sendMessage("§4Error while executing command\n§c" + e.getMessage());
 	 return true;
 	}
@@ -380,12 +402,13 @@ public abstract class DynamicCommand extends Command {
 	if(args.length == 0) return run(sender, label, new DynamicArguments(sender, new DynamicArgument[0], args));
 	DynamicArguments arguments = new DynamicArguments(sender, rawArguments.clone(), args);
 	arguments.test(sender, args);
-	int i = 0;
+	int i = arguments.inputs().length;
 	int size = 0;
 	boolean didExecute = false, retains = false;
-	for(DynamicArgument<?> argument : arguments) {
-	 if(argument.executes() != null) {
-		argument.executes().perform(sender, this, label, String.join(" ", Arrays.copyOfRange(arguments.inputs(), i, i + size)), arguments);
+	for(DynamicArgument<?> argument : arguments.reversed()) {
+	 i--;
+	 if(argument.executes() != null && !didExecute) {
+		argument.executes().perform(sender, this, label, arguments.inputs()[i], arguments);
 		didExecute = true;
 	 }
 	 size += arguments.getSpan(argument.name());
@@ -393,7 +416,6 @@ public abstract class DynamicCommand extends Command {
 		retains = true;
 		continue;
 	 }
-	 i++;
 	 size = 0;
 	}
 	try {
@@ -416,6 +438,15 @@ public abstract class DynamicCommand extends Command {
 		 ", rawArguments=" + Arrays.toString(rawArguments) +
 		 ", plugin=" + plugin +
 		 '}';
+ }
+
+ public JavaPlugin plugin() {
+	return plugin;
+ }
+
+ @Override
+ public Plugin getPlugin() {
+	return plugin;
  }
 
  public DynamicArgument<?>[] getArguments() {

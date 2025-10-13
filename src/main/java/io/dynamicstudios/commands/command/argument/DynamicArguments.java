@@ -41,43 +41,51 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	 }
 	}
 	startingArgument = null;
-//	for(DynamicArgument<?> argument : arguments)
-//	 System.out.println(printArgs(argument, 0));
-//	System.out.println(sender.getName());
-//	System.out.println("a");
-//	System.out.println(this.arguments);
-//	System.out.println(String.join(" ", args));
+ }
+
+ public String getNodePath() {
+	return String.join(" ", arguments.values());
+ }
+
+ public String getNodePath(String afterNode) {
+	List<String> keys = new ArrayList<>(arguments.keySet());
+	int index = keys.indexOf(afterNode);
+	if (index == -1 || index == keys.size() - 1) {
+	 return "";
+	}
+	List<String> values = new ArrayList<>(arguments.values());
+	return String.join(" ", values.subList(index + 1, values.size()));
+ }
+
+ public String getNodePath(String startNode, String endNode) {
+	List<String> keys = new ArrayList<>(arguments.keySet());
+	int startIndex = keys.indexOf(startNode);
+	int endIndex = keys.indexOf(endNode);
+	if (startIndex == -1 || endIndex == -1 || startIndex >= endIndex - 1 || endIndex <= startIndex) {
+	 return "";
+	}
+	List<String> values = new ArrayList<>(arguments.values());
+	return String.join(" ", values.subList(startIndex + 1, endIndex));
+ }
+
+ public String getNodePathInclusive(String startNode, String endNode) {
+	List<String> keys = new ArrayList<>(arguments.keySet());
+	int startIndex = keys.indexOf(startNode);
+	int endIndex = keys.indexOf(endNode);
+	if (startIndex == -1 || endIndex == -1 || endIndex < startIndex) {
+	 return "";
+	}
+	List<String> values = new ArrayList<>(arguments.values());
+	return String.join(" ", values.subList(startIndex, endIndex + 1));
  }
 
  public DynamicArgument<?> startingArgument() {
 	return startingArgument;
  }
 
- public String printArgs(DynamicArgument<?> argument, int indent) {
-	StringBuilder builder = new StringBuilder();
-//	builder.append("\n");
-	for(int i = 0; i < indent; i++) {
-	 builder.append(" ");
-	}
-	builder.append(argument.name()).append(" ").append(argument.type().getSimpleName());
-	if(argument.subArguments.isEmpty()) {
-	 return builder.append(";").toString();
-	}
-	builder.append(" {");
-	for(DynamicArgument<?> subArgument : argument.subArguments) {
-	 builder.append("\n").append(printArgs(subArgument, indent + 1));
-	}
-	builder.append("\n");
-	for(int i = 0; i < indent; i++) {
-	 builder.append(" ");
-	}
-	builder.append("}");
-	return builder.toString();
- }
-
  private boolean loadArguments(DynamicArgument<?> argument, int depth, String[] args) {
 	if(depth > args.length) return false;
-	String arg = String.join(" ", Arrays.copyOfRange(args, depth, Math.min(Math.max(0, depth + (argument.span() == -1 ? 256 : argument.span())), args.length)));
+	String arg = String.join(" ", Arrays.copyOfRange(args, depth, Math.min(Math.max(0, depth + (argument.span() == -1 || argument.span() == -2 ? 256 : argument.span())), args.length)));
 	int increase = 1;
 	if(argument.span() == 1 && argument instanceof DynamicStringArgument) {
 	 while(arg.startsWith("\"") && !arg.matches("^\\\"(?<data>(?:(?=\\\\\\\")..|(?!\\\").)*)\\\"$")) {
@@ -92,14 +100,14 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	String lName = argument.name().toLowerCase();
 	int argSpan = increase;// arg.split(" ").length;
 	if(this.key.containsKey(lName) ||
-		 this.arguments.containsKey(lName) ||
-		 this.argumentTypes.containsKey(lName) ||
-		 this.argumentsSpan.containsKey(lName)) {
+			this.arguments.containsKey(lName) ||
+			this.argumentTypes.containsKey(lName) ||
+			this.argumentsSpan.containsKey(lName)) {
 	 int sub = 2;
 	 while(this.key.containsKey(lName + sub) ||
-			this.arguments.containsKey(lName + sub) ||
-			this.argumentTypes.containsKey(lName + sub) ||
-			this.argumentsSpan.containsKey(lName + sub)) {
+			 this.arguments.containsKey(lName + sub) ||
+			 this.argumentTypes.containsKey(lName + sub) ||
+			 this.argumentsSpan.containsKey(lName + sub)) {
 		sub++;
 	 }
 	 this.key.put(lName + sub, argument);
@@ -113,7 +121,7 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	 this.argumentsSpan.put(lName, argSpan);
 	}
 	for(DynamicArgument<?> dynamicArgument : argument.subArguments()) {
-	 if(loadArguments(dynamicArgument, depth + (argument.span() == -1 ? 256 : argSpan), args)) return true;
+	 if(loadArguments(dynamicArgument, depth + (argument.span() == -1 || argument.span() == -2 ? 256 : argSpan), args)) return true;
 	}
 	return true;
  }
@@ -186,17 +194,23 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
  @Override
  public String toString() {
 	return "DynamicArguments{" +
-		 "args=" + Arrays.toString(inputs) +
-		 ", list=" + list +
-		 ", arguments=" + arguments +
-		 ", key=" + key +
-		 ", argumentTypes=" + argumentTypes +
-		 '}';
+			"args=" + Arrays.toString(inputs) +
+			", list=" + list +
+			", arguments=" + arguments +
+			", key=" + key +
+			", argumentTypes=" + argumentTypes +
+			'}';
  }
 
  @Override
  public Iterator<DynamicArgument<?>> iterator() {
 	return key.values().iterator();
+ }
+
+ public List<DynamicArgument<?>> reversed() {
+	List<DynamicArgument<?>> list = new ArrayList<>(key.values());
+	Collections.reverse(list);
+	return list;
  }
 
  public int length() {
@@ -219,8 +233,8 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	 argument.predicate().test(sender, arguments.get(name.toLowerCase()));
 	 argument.parse(sender, arguments.get(name.toLowerCase()));
 	 if(size < Integer.MAX_VALUE)
-		size += (argument.span() == -1 ? 256 : getSpan(name));
-	 if(size == -1) {
+		size += (argument.span() == -1 || argument.span() == -2 ? 256 : getSpan(name));
+	 if(size == -1 || size == -2) {
 		size = Integer.MAX_VALUE;
 	 }
 	}

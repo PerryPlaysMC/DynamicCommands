@@ -50,13 +50,14 @@ public class DefaultHelpPage extends HelpPage {
 	DynamicJText msg = new DynamicJText("\n\n\n\n\n")
 		 .add("[c]Showing help for /[i]" + commandName).suggest("/" + commandName);
 	msg.add("\n[c]Aliases: [i]" + aliases);
- 	msg.add("\n[c]Page [i]" + (page + 1) + "[c]/[i]" + pages.size() + " ");
-	if(page == 0) msg.add("&l&8&m«&r");
-	else msg.add("&l[i]«").hover("[c]Click to go to previous page").command(command.getName() + " help " + (page));
+ 	msg.add("\n[c]Page [i]" + (page + 1) + "[c]/[i]" + pages.size());
+	msg.add("\n[c]&l&m----------");
+	if(page == 0) msg.add("&r&l&8&m«&r");
+	else msg.add("&r&l[i]«").hover("[c]Click to go to previous page").command(command.getName() + " help " + (page));
 	msg.add(" ").disableStyles(DynamicStyle.STRIKETHROUGH);
-	if(page == pages.size()-1) msg.add("&l&8&m»&r");
-	else msg.add("&l[i]»").hover("[c]Click to go to next page").command(command.getName() + " help " + (page + 2));
-	msg.add("\n[c]&l&m---------------------&r");
+	if(page == pages.size()-1) msg.add("&r&l&8&m»&r");
+	else msg.add("&r&l[i]»").hover("[c]Click to go to next page").command(command.getName() + " help " + (page + 2));
+	msg.add("[c]&l&m----------&r");
 	List<Map.Entry<String, String>> commandsToDisplay = subCommand.subList(page * pageSize, Math.min((page * pageSize) + pageSize, subCommand.size()));
 	for(Map.Entry<String, String> name : commandsToDisplay) {
 	 DynamicJText text = DynamicJText.parseText(name.getKey());
@@ -64,7 +65,13 @@ public class DefaultHelpPage extends HelpPage {
 			.add(IComponent.textComponent(CColor.translateCommon(commandName + "[c] ")).add(text))
 	 ;
 	}
-	msg.add("\n[c]&l&m---------------------");
+	msg.add("\n[c]&l&m----------");
+	if(page == 0) msg.add("&r&l&8&m«&r");
+	else msg.add("&r&l[i]«").hover("[c]Click to go to previous page").command(command.getName() + " help " + (page));
+	msg.add(" ").disableStyles(DynamicStyle.STRIKETHROUGH);
+	if(page == pages.size()-1) msg.add("&r&l&8&m»&r");
+	else msg.add("&r&l[i]»").hover("[c]Click to go to next page").command(command.getName() + " help " + (page + 2));
+	msg.add("[c]&l&m----------");
 	msg.sendChat(sender);
  }
 

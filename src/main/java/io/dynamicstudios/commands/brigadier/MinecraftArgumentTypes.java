@@ -7,10 +7,10 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.dynamicstudios.json.Version;
-import io.dynamicstudios.reflectionutils.DynamicClass;
-import io.dynamicstudios.reflectionutils.DynamicField;
-import io.dynamicstudios.reflectionutils.DynamicLookup;
-import io.dynamicstudios.reflectionutils.DynamicMethod;
+import io.dynamicstudios.reflection.DynamicClass;
+import io.dynamicstudios.reflection.DynamicField;
+import io.dynamicstudios.reflection.DynamicLookup;
+import io.dynamicstudios.reflection.DynamicMethod;
 import org.bukkit.NamespacedKey;
 
 import java.lang.reflect.Constructor;

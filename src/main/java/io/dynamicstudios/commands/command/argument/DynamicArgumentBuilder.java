@@ -4,6 +4,7 @@ import io.dynamicstudios.commands.command.argument.types.*;
 import org.bukkit.command.CommandSender;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -234,6 +235,11 @@ public class DynamicArgumentBuilder {
 
  public DynamicArgumentBuilder literal(String name, String description) {
 	return add(DynamicArgument.literal(name, description));
+ }
+
+ public DynamicArgumentBuilder multiLiteral(Collection<String> names, String description) {
+	names.forEach(name->DynamicArgument.literal(name, description));
+	return this;
  }
 
 
