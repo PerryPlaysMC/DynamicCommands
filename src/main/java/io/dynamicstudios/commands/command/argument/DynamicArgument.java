@@ -152,6 +152,7 @@ public abstract class DynamicArgument<T> {
 
  //</editor-fold>
 
+
  //<editor-fold desc="Float Arguments">
 
  public static DynamicFloatArgument floatArg(String name, String description) {
@@ -199,6 +200,26 @@ public abstract class DynamicArgument<T> {
  public static DynamicLocationArgument location(String name, String description) {
 	return DynamicLocationArgument.of(name, description);
  }
+
+ //<editor-fold desc="Entity Arguments">
+
+ public static DynamicEntityArgument entity(String name, String description) {
+	return DynamicEntityArgument.entity(name, description);
+ }
+
+ public static DynamicEntityArgument entities(String name, String description) {
+	return DynamicEntityArgument.entities(name, description);
+ }
+
+ public static DynamicEntityArgument player(String name, String description) {
+	return DynamicEntityArgument.player(name, description);
+ }
+
+ public static DynamicEntityArgument players(String name, String description) {
+	return DynamicEntityArgument.players(name, description);
+ }
+
+ //</editor-fold>
 
  public ArgumentPredicate predicate() {
 	return predicate == null ? (s, arg) -> {
@@ -370,6 +391,10 @@ public abstract class DynamicArgument<T> {
  }
 
  public abstract boolean isValid(String input);
+
+ public ValidationResult validationResult(String input) {
+	return null;
+ }
 
  public int length() {
 	int length = subArguments.size();

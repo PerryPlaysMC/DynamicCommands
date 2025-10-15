@@ -22,7 +22,6 @@
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/DynamicLongArgument.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/DynamicArgument.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/exceptions/CommandNotImplementedException.java
-/Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/TargetSelectorUtil.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/ArgumentExecutor.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/DynamicLocationArgument.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/DynamicStringArgument.java
@@ -34,6 +33,7 @@
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/util/ClassFinder.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/exceptions/brigadier/BuiltInExceptionProvider.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/DynamicFloatArgument.java
+/Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/helper/TargetSelector.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/DynamicIntegerArgument.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/brigadier/registration/BrigadierUnsupportedException.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/annotation/Command.java
@@ -44,7 +44,9 @@
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/util/Pair.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/DynamicCommandManager.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/brigadier/registration/Brigadier.java
+/Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/DynamicEntityArgument.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/brigadier/registration/AbstractBrigadier.java
+/Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/ValidationResult.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/DynamicArgumentBuilder.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/TabArgumentPredicate.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/brigadier/MinecraftArgumentTypes.java

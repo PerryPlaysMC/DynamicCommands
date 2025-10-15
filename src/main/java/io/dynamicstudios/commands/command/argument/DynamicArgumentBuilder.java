@@ -4,7 +4,6 @@ import io.dynamicstudios.commands.command.argument.types.*;
 import org.bukkit.command.CommandSender;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -212,6 +211,40 @@ public class DynamicArgumentBuilder {
 	return begin(DynamicArgument.location(name, description));
  }
 
+
+ public DynamicArgumentBuilder beginEntity(String name, String description) {
+	return begin(DynamicArgument.entity(name, description));
+ }
+
+ public DynamicArgumentBuilder beginEntity(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return begin(DynamicArgument.entity(name, description), consumer);
+ }
+
+ public DynamicArgumentBuilder beginEntities(String name, String description) {
+	return begin(DynamicArgument.entities(name, description));
+ }
+
+ public DynamicArgumentBuilder beginEntities(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return begin(DynamicArgument.entities(name, description), consumer);
+ }
+
+ public DynamicArgumentBuilder beginPlayers(String name, String description) {
+	return begin(DynamicArgument.players(name, description));
+ }
+
+ public DynamicArgumentBuilder beginPlayers(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return begin(DynamicArgument.players(name, description), consumer);
+ }
+
+ public DynamicArgumentBuilder beginPlayer(String name, String description) {
+	return begin(DynamicArgument.player(name, description));
+ }
+
+ public DynamicArgumentBuilder beginPlayer(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return begin(DynamicArgument.player(name, description), consumer);
+ }
+
+
  public DynamicArgumentBuilder begin(DynamicArgument<?> argument) {
 	return new DynamicArgumentBuilder(this, argument);
  }
@@ -238,7 +271,7 @@ public class DynamicArgumentBuilder {
  }
 
  public DynamicArgumentBuilder multiLiteral(Collection<String> names, String description) {
-	names.forEach(name->DynamicArgument.literal(name, description));
+	names.forEach(name -> DynamicArgument.literal(name, description));
 	return this;
  }
 
@@ -328,97 +361,95 @@ public class DynamicArgumentBuilder {
 	return add(DynamicArgument.location(name, description));
  }
 
+ public DynamicArgumentBuilder entity(String name, String description) {
+	return add(DynamicArgument.entity(name, description));
+ }
+
+ public DynamicArgumentBuilder entities(String name, String description) {
+	return add(DynamicArgument.entities(name, description));
+ }
+
+ public DynamicArgumentBuilder players(String name, String description) {
+	return add(DynamicArgument.players(name, description));
+ }
+
+ public DynamicArgumentBuilder player(String name, String description) {
+	return add(DynamicArgument.player(name, description));
+ }
+
 
  public static DynamicArgumentBuilder createLiteral(String name, String description) {
-	return new DynamicArgumentBuilder(DynamicLiteral.of(name, description));
+	return create(DynamicLiteral.of(name, description));
  }
 
  public static DynamicArgumentBuilder createLiteral(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicLiteral.of(name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicLiteral.of(name, description), consumer);
  }
 
  public static DynamicArgumentBuilder createLimited(String name, String description, int length) {
-	return new DynamicArgumentBuilder(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.LIMITED).span(length));
+	return create(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.LIMITED).span(length));
  }
 
  public static DynamicArgumentBuilder createLimited(String name, String description, int length, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.LIMITED).span(length));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.LIMITED).span(length), consumer);
  }
 
  public static DynamicArgumentBuilder createGreedy(String name, String description) {
-	return new DynamicArgumentBuilder(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.GREEDY));
+	return create(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.GREEDY));
  }
 
  public static DynamicArgumentBuilder createGreedy(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.GREEDY));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.GREEDY), consumer);
  }
 
  public static DynamicArgumentBuilder createWord(String name, String description) {
-	return new DynamicArgumentBuilder(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.WORD));
+	return create(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.WORD));
  }
 
  public static DynamicArgumentBuilder createWord(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.WORD));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.WORD), consumer);
  }
 
  public static DynamicArgumentBuilder createSingle(String name, String description) {
-	return new DynamicArgumentBuilder(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.SINGLE));
+	return create(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.SINGLE));
  }
 
  public static DynamicArgumentBuilder createSingle(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.SINGLE));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicStringArgument.of(name, description, DynamicStringArgument.StringType.SINGLE), consumer);
  }
 
  public static DynamicArgumentBuilder createLimited(String name, String description) {
-	return new DynamicArgumentBuilder(DynamicStringArgument.of(name, description));
+	return create(DynamicStringArgument.of(name, description));
  }
 
  public static DynamicArgumentBuilder createLimited(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicStringArgument.of(name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicStringArgument.of(name, description), consumer);
  }
 
  //<editor-fold desc="Integer Arguments">
 
  public static DynamicArgumentBuilder createInteger(String name, String description) {
-	return new DynamicArgumentBuilder(DynamicIntegerArgument.of(name, description));
+	return create(DynamicIntegerArgument.of(name, description));
  }
 
  public static DynamicArgumentBuilder createInteger(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicIntegerArgument.of(name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicIntegerArgument.of(name, description), consumer);
  }
 
  public static DynamicArgumentBuilder createInteger(String name, String description, int min, int max) {
-	return new DynamicArgumentBuilder(DynamicIntegerArgument.of(min, max, name, description));
+	return create(DynamicIntegerArgument.of(min, max, name, description));
  }
 
  public static DynamicArgumentBuilder createInteger(String name, String description, int min, int max, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicIntegerArgument.of(min, max, name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicIntegerArgument.of(min, max, name, description), consumer);
  }
 
  public static DynamicArgumentBuilder createInteger(String name, String description, int min) {
-	return new DynamicArgumentBuilder(DynamicIntegerArgument.of(min, name, description));
+	return create(DynamicIntegerArgument.of(min, name, description));
  }
 
  public static DynamicArgumentBuilder createInteger(String name, String description, int min, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicIntegerArgument.of(min, name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicIntegerArgument.of(min, name, description), consumer);
  }
 
  //</editor-fold>
@@ -426,33 +457,27 @@ public class DynamicArgumentBuilder {
  //<editor-fold desc="Long Arguments">
 
  public static DynamicArgumentBuilder createLong(String name, String description) {
-	return new DynamicArgumentBuilder(DynamicLongArgument.of(name, description));
+	return create(DynamicLongArgument.of(name, description));
  }
 
  public static DynamicArgumentBuilder createLong(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicLongArgument.of(name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicLongArgument.of(name, description), consumer);
  }
 
  public static DynamicArgumentBuilder createLong(String name, String description, long min, long max) {
-	return new DynamicArgumentBuilder(DynamicLongArgument.of(min, max, name, description));
+	return create(DynamicLongArgument.of(min, max, name, description));
  }
 
  public static DynamicArgumentBuilder createLong(String name, String description, long min, long max, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicLongArgument.of(min, max, name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicLongArgument.of(min, max, name, description), consumer);
  }
 
  public static DynamicArgumentBuilder createLong(String name, String description, long min) {
-	return new DynamicArgumentBuilder(DynamicLongArgument.of(min, name, description));
+	return create(DynamicLongArgument.of(min, name, description));
  }
 
  public static DynamicArgumentBuilder createLong(String name, String description, long min, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicLongArgument.of(min, name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicLongArgument.of(min, name, description), consumer);
  }
 
  //</editor-fold>
@@ -460,33 +485,27 @@ public class DynamicArgumentBuilder {
  //<editor-fold desc="Float Arguments">
 
  public static DynamicArgumentBuilder createFloat(String name, String description) {
-	return new DynamicArgumentBuilder(DynamicFloatArgument.of(name, description));
+	return create(DynamicFloatArgument.of(name, description));
  }
 
  public static DynamicArgumentBuilder createFloat(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicFloatArgument.of(name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicFloatArgument.of(name, description), consumer);
  }
 
  public static DynamicArgumentBuilder createFloat(String name, String description, float min, float max) {
-	return new DynamicArgumentBuilder(DynamicFloatArgument.of(min, max, name, description));
+	return create(DynamicFloatArgument.of(min, max, name, description));
  }
 
  public static DynamicArgumentBuilder createFloat(String name, String description, float min, float max, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicFloatArgument.of(min, max, name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicFloatArgument.of(min, max, name, description), consumer);
  }
 
  public static DynamicArgumentBuilder createFloat(String name, String description, float min) {
-	return new DynamicArgumentBuilder(DynamicFloatArgument.of(min, name, description));
+	return create(DynamicFloatArgument.of(min, name, description));
  }
 
  public static DynamicArgumentBuilder createFloat(String name, String description, float min, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicFloatArgument.of(min, name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicFloatArgument.of(min, name, description), consumer);
  }
 
  //</editor-fold>
@@ -494,66 +513,89 @@ public class DynamicArgumentBuilder {
  //<editor-fold desc="Double Arguments">
 
  public static DynamicArgumentBuilder createDouble(String name, String description) {
-	return new DynamicArgumentBuilder(DynamicDoubleArgument.of(name, description));
+	return create(DynamicDoubleArgument.of(name, description));
  }
 
  public static DynamicArgumentBuilder createDouble(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicDoubleArgument.of(name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicDoubleArgument.of(name, description), consumer);
  }
 
  public static DynamicArgumentBuilder createDouble(String name, String description, double min, double max) {
-	return new DynamicArgumentBuilder(DynamicDoubleArgument.of(min, max, name, description));
+	return create(DynamicDoubleArgument.of(min, max, name, description));
  }
 
  public static DynamicArgumentBuilder createDouble(String name, String description, double min, double max, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicDoubleArgument.of(min, max, name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicDoubleArgument.of(min, max, name, description), consumer);
  }
 
  public static DynamicArgumentBuilder createDouble(String name, String description, double min) {
-	return new DynamicArgumentBuilder(DynamicDoubleArgument.of(min, name, description));
+	return create(DynamicDoubleArgument.of(min, name, description));
  }
 
  public static DynamicArgumentBuilder createDouble(String name, String description, double min, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicDoubleArgument.of(min, name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicDoubleArgument.of(min, name, description), consumer);
  }
 
  //</editor-fold>
 
  public static DynamicArgumentBuilder createBoolean(String name, String description) {
-	return new DynamicArgumentBuilder(DynamicBooleanArgument.of(name, description));
+	return create(DynamicBooleanArgument.of(name, description));
  }
 
  public static DynamicArgumentBuilder createBoolean(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicBooleanArgument.of(name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicBooleanArgument.of(name, description), consumer);
  }
 
  public static <T> DynamicArgumentBuilder createObj(Class<T> type, String name, String description) {
-	return new DynamicArgumentBuilder(DynamicObjectArgument.of(type, name, description));
+	return create(DynamicObjectArgument.of(type, name, description));
  }
 
  public static <T> DynamicArgumentBuilder createObj(Class<T> type, String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicObjectArgument.of(type, name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicObjectArgument.of(type, name, description), consumer);
  }
 
  public static DynamicArgumentBuilder createLocation(String name, String description) {
-	return new DynamicArgumentBuilder(DynamicLocationArgument.of(name, description));
+	return create(DynamicLocationArgument.of(name, description));
  }
 
  public static DynamicArgumentBuilder createLocation(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
-	DynamicArgumentBuilder builder = new DynamicArgumentBuilder(DynamicLocationArgument.of(name, description));
-	consumer.accept(builder);
-	return builder;
+	return create(DynamicLocationArgument.of(name, description), consumer);
  }
+
+
+ public DynamicArgumentBuilder createEntity(String name, String description) {
+	return create(DynamicArgument.entity(name, description));
+ }
+
+ public DynamicArgumentBuilder createEntity(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return create(DynamicArgument.entity(name, description), consumer);
+ }
+
+ public DynamicArgumentBuilder createEntities(String name, String description) {
+	return create(DynamicArgument.entities(name, description));
+ }
+
+ public DynamicArgumentBuilder createEntities(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return create(DynamicArgument.entities(name, description), consumer);
+ }
+
+ public DynamicArgumentBuilder createPlayers(String name, String description) {
+	return create(DynamicArgument.players(name, description));
+ }
+
+ public DynamicArgumentBuilder createPlayers(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return create(DynamicArgument.players(name, description), consumer);
+ }
+
+ public DynamicArgumentBuilder createPlayer(String name, String description) {
+	return create(DynamicArgument.player(name, description));
+ }
+
+ public DynamicArgumentBuilder createPlayer(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return create(DynamicArgument.player(name, description), consumer);
+ }
+
+
 
  public static DynamicArgumentBuilder create(DynamicArgument<?> argument) {
 	return new DynamicArgumentBuilder(argument);
@@ -613,7 +655,6 @@ public class DynamicArgumentBuilder {
 	this.base.subArguments.get(this.base.subArguments.size() - 1).predicate(predicate);
 	return this;
  }
-
 
 
  public DynamicArgumentBuilder tabPredicate(TabArgumentPredicate tabPredicate) {
@@ -677,8 +718,6 @@ public class DynamicArgumentBuilder {
 	 this.base.retains(true);
 	return base;
  }
-
-
 
 
 }

@@ -85,16 +85,33 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 
  private boolean loadArguments(DynamicArgument<?> argument, int depth, String[] args) {
 	if(depth > args.length) return false;
-	String arg = String.join(" ", Arrays.copyOfRange(args, depth, Math.min(Math.max(0, depth + (argument.span() == -1 || argument.span() == -2 ? 256 : argument.span())), args.length)));
+	int increment = argument.span() == -1 || argument.span() == -2 ? 256 : argument.span();
+	String arg = String.join(" ", Arrays.copyOfRange(args, depth, Math.min(Math.max(0, depth + increment), args.length)));
 	int increase = 1;
+	boolean valid = false;
 	if(argument.span() == 1 && argument instanceof DynamicStringArgument) {
 	 while(arg.startsWith("\"") && !arg.matches("^\\\"(?<data>(?:(?=\\\\\\\")..|(?!\\\").)*)\\\"$")) {
 		arg = String.join(" ", Arrays.copyOfRange(args, depth, Math.min(Math.max(0, depth + increase), args.length)));
 		if(arg.matches("^\\\"(?<data>(?:(?=\\\\\\\")..|(?!\\\").)*)\\\"$") || depth + increase > args.length) break;
 		increase++;
 	 }
-	} else increase = arg.split(" ").length;
-	if(!argument.isValid(arg))
+	} else {
+	 ValidationResult result = argument.validationResult(arg);
+	 if(result != null) {
+		String full = "";
+		for(String s : arg.split(" ")) {
+		 full += (full.isEmpty() ? "" : " ") + s;
+		 result = argument.validationResult(full);
+		 if(result == ValidationResult.NEXT) break;
+		}
+		arg = full;
+		increase = full.split(" ").length;
+		valid = true;
+	 }else {
+		increase = arg.split(" ").length;
+	 }
+	}
+	if(!valid && !argument.isValid(arg))
 	 return false;
 	if(arg.isEmpty()) return false;
 	String lName = argument.name().toLowerCase();
@@ -121,7 +138,7 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	 this.argumentsSpan.put(lName, argSpan);
 	}
 	for(DynamicArgument<?> dynamicArgument : argument.subArguments()) {
-	 if(loadArguments(dynamicArgument, depth + (argument.span() == -1 || argument.span() == -2 ? 256 : argSpan), args)) return true;
+	 if(loadArguments(dynamicArgument, depth + increase, args)) return true;
 	}
 	return true;
  }

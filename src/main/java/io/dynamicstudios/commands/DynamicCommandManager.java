@@ -464,6 +464,14 @@ public class DynamicCommandManager {
 	} else if(arg instanceof DynamicIntegerArgument) {
 	 DynamicIntegerArgument iArg = (DynamicIntegerArgument) arg;
 	 argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.RANGE2_INTEGER.apply(iArg.min(), iArg.max()));
+	} else if(arg instanceof DynamicEntityArgument) {
+	 DynamicEntityArgument eArg = (DynamicEntityArgument) arg;
+	 if(eArg.isSingle()) {
+		argCommand = RequiredArgumentBuilder.argument(arg.name(), eArg.isPlayer() ? BrigadierTypes.PLAYER : BrigadierTypes.ENTITY);
+	 }else {
+		argCommand = RequiredArgumentBuilder.argument(arg.name(), eArg.isPlayer() ? BrigadierTypes.PLAYERS : BrigadierTypes.ENTITIES);
+	 }
+	 hasProvider = false;
 	} else if(arg instanceof DynamicBooleanArgument) {
 	 for(String val : Arrays.asList("yes", "no","true", "false")) {
 		argCommand = LiteralArgumentBuilder.literal(val);

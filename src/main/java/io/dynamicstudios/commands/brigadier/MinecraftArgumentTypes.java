@@ -7,6 +7,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.dynamicstudios.json.Version;
+import io.dynamicstudios.json.data.util.packet.ReflectionUtils;
 import io.dynamicstudios.reflection.DynamicClass;
 import io.dynamicstudios.reflection.DynamicField;
 import io.dynamicstudios.reflection.DynamicLookup;
@@ -230,6 +231,56 @@ public final class MinecraftArgumentTypes {
 		}
 	 }
 	 return (ArgumentType<?>) m.invoke(null);
+	} catch(ReflectiveOperationException e) {
+	 throw new RuntimeException(e);
+	}
+ }
+
+ /**
+	* Gets a registered argument type by key.
+	*
+	* @param key the key
+	* @return the returned argument
+	* @throws IllegalArgumentException if no such argument is registered
+	*/
+ public static ArgumentType<?> getByKeyMethod(NamespacedKey key, int index) throws IllegalArgumentException {
+	try {
+	 Class<? extends ArgumentType<?>> clazz = getClassByKey(key);
+	 Method m = null;
+	 int id = 0;
+	 for(Method declaredMethod : clazz.getDeclaredMethods()) {
+		if(Modifier.isStatic(declaredMethod.getModifiers()) && declaredMethod.getParameterCount() == 0) {
+		 if(!clazz.getName().equalsIgnoreCase(declaredMethod.getReturnType().getName()) &&
+				!clazz.getSuperclass().getName().equalsIgnoreCase(declaredMethod.getReturnType().getName())) {
+			continue;
+		 }
+		 if(id == index) {
+			m = declaredMethod;
+			m.setAccessible(true);
+			break;
+		 }
+		 id++;
+		}
+	 }
+	 return (ArgumentType<?>) m.invoke(null);
+	} catch(ReflectiveOperationException e) {
+	 throw new RuntimeException(e);
+	}
+ }
+
+ /**
+	* Gets a registered argument type by key.
+	*
+	* @param key the key
+	* @return the returned argument
+	* @throws IllegalArgumentException if no such argument is registered
+	*/
+ public static ArgumentType<?> newArgument(NamespacedKey key, Class<?>[] types, Object... params) throws IllegalArgumentException {
+	try {
+	 Class<? extends ArgumentType<?>> clazz = getClassByKey(key);
+	 Constructor<?> constructor = ReflectionUtils.getConstructor(clazz, types);
+	 constructor.setAccessible(true);
+	 return (ArgumentType<?>) constructor.newInstance(params);
 	} catch(ReflectiveOperationException e) {
 	 throw new RuntimeException(e);
 	}

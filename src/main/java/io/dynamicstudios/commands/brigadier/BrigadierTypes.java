@@ -29,6 +29,9 @@ public class BrigadierTypes {
  public static final Function<Integer, ArgumentType> RANGE_INTEGER = (max) -> RANGE2_INTEGER.apply(-Integer.MAX_VALUE, max);
  public static final Function<Long, ArgumentType> RANGE_LONG = (max) -> RANGE2_LONG.apply(-Long.MAX_VALUE, max);
 
+ public static final ArgumentType ENTITIES;
+ public static final ArgumentType PLAYERS;
+ public static final ArgumentType PLAYER;
  public static final ArgumentType ENTITY;
  public static final ArgumentType GAME_PROFILE;
  public static final ArgumentType BLOCK_POS;
@@ -97,7 +100,10 @@ public class BrigadierTypes {
 	DOUBLE = MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.fromString("brigadier:double"));
 	INTEGER = MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.fromString("brigadier:integer"));
 	LONG = MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.fromString("brigadier:long"));
-	ENTITY = MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.minecraft("entity"));
+	ENTITY = MinecraftArgumentTypes.newArgument(NamespacedKey.minecraft("entity"), new Class[]{boolean.class, boolean.class},true, false);
+	ENTITIES = MinecraftArgumentTypes.newArgument(NamespacedKey.minecraft("entity"), new Class[]{boolean.class, boolean.class},false, false);
+	PLAYERS = MinecraftArgumentTypes.newArgument(NamespacedKey.minecraft("entity"), new Class[]{boolean.class, boolean.class},false, true);
+	PLAYER = MinecraftArgumentTypes.newArgument(NamespacedKey.minecraft("entity"), new Class[]{boolean.class, boolean.class},true, true);
 	GAME_PROFILE = MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.minecraft("game_profile"));
 	BLOCK_POS = MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.minecraft("block_pos"));
 	COLUMN_POS = MinecraftArgumentTypes.getByKeyMethod(NamespacedKey.minecraft("column_pos"));
