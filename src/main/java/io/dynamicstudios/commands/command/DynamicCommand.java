@@ -18,6 +18,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static io.dynamicstudios.commands.DynamicCommandManager.DEBUG_ENABLED;
+
 /**
  * Creator: PerryPlaysMC
  * Created: 08/2022
@@ -128,7 +130,6 @@ public abstract class DynamicCommand extends Command implements PluginIdentifiab
 	Comparator<DynamicArgument> name = Comparator.comparing(DynamicArgument::length);
 	arguments = Arrays.stream(arguments).sorted(name.thenComparing(c -> c.name().length()).thenComparing(DynamicArgument::name).reversed()).collect(Collectors.toList()).toArray(new DynamicArgument<?>[0]);
 	for(DynamicArgument<?> argument : arguments) {
-	 String argName = argument.name();
 	 // Format argument name based on whether it's a literal or not
 	 List<String> help = new ArrayList<>();
 	 help.add("[i]Info:");
@@ -136,9 +137,11 @@ public abstract class DynamicCommand extends Command implements PluginIdentifiab
 	 help.add("[i]Full Info:\n{fullInfo}");
 	 help.add("[i]Click to insert:");
 	 boolean optional = !argument.required() && argument.isOptional() && argument.parent(DynamicArgument::required) != null;
-	 String formName = (argument instanceof DynamicLiteral) ? (optional ? "[r]" : "[c]") + wrap(argName, optional ? "[]" : "") :
+	 String argName = argument.name();
+	 String argDisplayName = argument instanceof DynamicLiteral ? String.join("[c]|" + (optional ? "[r]" : "[c]"), ((DynamicLiteral) argument).getLiterals()) : argument.name();
+	 String formName = (argument instanceof DynamicLiteral) ? (optional ? "[r]" : "[c]") + wrap(argDisplayName, optional ? "[]" : "") :
 			(argument.executes() == null && optional ?
-				 "[o]" + wrap(argName, "[]") : "[r]" + wrap(argName, "<>"));
+				 "[o]" + wrap(argDisplayName, "[]") : "[r]" + wrap(argDisplayName, "<>"));
 
 	 String inputName = (argument instanceof DynamicLiteral) ? wrap(argName, optional ? "[]" : "{}") :
 			(argument.executes() == null && optional ?
@@ -382,6 +385,7 @@ public abstract class DynamicCommand extends Command implements PluginIdentifiab
 	try {
 	 return performCommand(sender, label, args);
 	} catch(CommandException | ClassCastException e) {
+	 if(DEBUG_ENABLED) e.printStackTrace();
 	 if(e.getMessage().matches(".*cannot be cast to class.*Player.*")) {
 		sender.sendMessage("§cOnly players may perform this command");
 		return true;
@@ -392,7 +396,6 @@ public abstract class DynamicCommand extends Command implements PluginIdentifiab
 		 return true;
 		}
 	 }
-	 e.printStackTrace();
 	 sender.sendMessage("§4Error while executing command\n§c" + e.getMessage());
 	 return true;
 	}

@@ -63,6 +63,8 @@ public class DynamicCommandManager {
 	);
  }
 
+ public static boolean DEBUG_ENABLED = false;
+
  public static String ERROR_MESSAGE = "Error: {command}";
  public static int COMMANDS_PER_PAGE = 10;
  public static HelpPage HELP_PAGE = new DefaultHelpPage();
@@ -448,7 +450,12 @@ public class DynamicCommandManager {
 	ArgumentBuilder<T, ?> argCommand;
 	boolean hasProvider = true;
 	if(arg instanceof DynamicLiteral) {
-	 argCommand = LiteralArgumentBuilder.literal(arg.name());
+	 for(String val : ((DynamicLiteral) arg).getLiterals()) {
+		argCommand = LiteralArgumentBuilder.literal(val);
+		argCommand = requires(arg, argCommand);
+		applyExecutor(executor, arg, command, stack, argCommand);
+	 }
+	 return hasProvider;
 	} else if(arg instanceof DynamicLocationArgument) {
 	 argCommand = RequiredArgumentBuilder.argument(arg.name(), BrigadierTypes.LOCATION);
 	 hasProvider = false;

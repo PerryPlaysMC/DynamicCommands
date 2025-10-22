@@ -95,9 +95,11 @@ public abstract class DynamicArgument<T> {
  public static DynamicLiteral literal(String name, String description) {
 	return DynamicLiteral.of(name, description);
  }
-
- public static List<DynamicLiteral> multiliteral(List<String> names, String description) {
-	return new ArrayList<>(names.stream().map(name -> DynamicLiteral.of(name, description)).collect(Collectors.toList()));
+ public static DynamicLiteral literal(String[] literals, String description) {
+	return DynamicLiteral.of(literals, description);
+ }
+ public static DynamicLiteral literal(List<String> literals, String description) {
+	return DynamicLiteral.of(literals, description);
  }
 
  public static DynamicStringArgument limited(String name, String description, int length) {

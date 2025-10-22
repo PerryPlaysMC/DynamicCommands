@@ -62,6 +62,7 @@ io/dynamicstudios/commands/brigadier/registration/ReflectionBrigadier$ServerRelo
 io/dynamicstudios/commands/command/PluginReloadListener.class
 io/dynamicstudios/commands/command/argument/types/helper/TargetSelector$1.class
 io/dynamicstudios/commands/exceptions/brigadier/Dynamic2CommandExceptionType$Function.class
+io/dynamicstudios/commands/command/argument/types/TargetSelectorUtil.class
 io/dynamicstudios/commands/exceptions/brigadier/SimpleCommandExceptionType.class
 io/dynamicstudios/commands/exceptions/brigadier/CommandExceptionType.class
 io/dynamicstudios/commands/DynamicCommandManager.class
@@ -69,6 +70,7 @@ io/dynamicstudios/commands/command/argument/types/DynamicLiteral.class
 io/dynamicstudios/commands/command/argument/types/DynamicDoubleArgument.class
 io/dynamicstudios/commands/exceptions/brigadier/BuiltInExceptionProvider.class
 io/dynamicstudios/commands/command/argument/types/helper/Direction$EnumDirectionLimit.class
+io/dynamicstudios/commands/command/argument/types/TargetSelectorUtil$Range.class
 io/dynamicstudios/commands/command/argument/types/DynamicBooleanArgument.class
 io/dynamicstudios/commands/brigadier/registration/BrigadierUnsupportedException.class
 io/dynamicstudios/commands/command/argument/types/DynamicEntityArgument.class

@@ -4,6 +4,7 @@ import io.dynamicstudios.commands.command.argument.types.*;
 import org.bukkit.command.CommandSender;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -43,6 +44,23 @@ public class DynamicArgumentBuilder {
 
  public DynamicArgumentBuilder beginLiteral(String name, String description) {
 	return begin(DynamicArgument.literal(name, description));
+ }
+
+
+ public DynamicArgumentBuilder beginLiteral(String[] literals, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return begin(DynamicArgument.literal(literals, description), consumer);
+ }
+
+ public DynamicArgumentBuilder beginLiteral(String[] literals, String description) {
+	return begin(DynamicArgument.literal(literals, description));
+ }
+
+ public DynamicArgumentBuilder beginLiteral(List<String> literals, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return begin(DynamicArgument.literal(literals, description), consumer);
+ }
+
+ public DynamicArgumentBuilder beginLiteral(List<String> literals, String description) {
+	return begin(DynamicArgument.literal(literals, description));
  }
 
 
@@ -270,6 +288,15 @@ public class DynamicArgumentBuilder {
 	return add(DynamicArgument.literal(name, description));
  }
 
+
+ public DynamicArgumentBuilder literal(String[] literals, String description) {
+	return add(DynamicArgument.literal(literals, description));
+ }
+
+ public DynamicArgumentBuilder literal(List<String> literals, String description) {
+	return add(DynamicArgument.literal(literals, description));
+ }
+
  public DynamicArgumentBuilder multiLiteral(Collection<String> names, String description) {
 	names.forEach(name -> DynamicArgument.literal(name, description));
 	return this;
@@ -384,6 +411,23 @@ public class DynamicArgumentBuilder {
 
  public static DynamicArgumentBuilder createLiteral(String name, String description, Consumer<DynamicArgumentBuilder> consumer) {
 	return create(DynamicLiteral.of(name, description), consumer);
+ }
+
+ public static DynamicArgumentBuilder createLiteral(String[] literals, String description) {
+	return create(DynamicLiteral.of(literals, description));
+ }
+
+ public static DynamicArgumentBuilder createLiteral(String[] literals, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return create(DynamicLiteral.of(literals, description), consumer);
+ }
+
+
+ public static DynamicArgumentBuilder createLiteral(List<String> literals, String description) {
+	return create(DynamicLiteral.of(literals, description));
+ }
+
+ public static DynamicArgumentBuilder createLiteral(List<String> literals, String description, Consumer<DynamicArgumentBuilder> consumer) {
+	return create(DynamicLiteral.of(literals, description), consumer);
  }
 
  public static DynamicArgumentBuilder createLimited(String name, String description, int length) {

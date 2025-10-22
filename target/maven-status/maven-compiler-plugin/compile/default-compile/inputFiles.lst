@@ -22,6 +22,7 @@
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/DynamicLongArgument.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/DynamicArgument.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/exceptions/CommandNotImplementedException.java
+/Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/TargetSelectorUtil.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/ArgumentExecutor.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/DynamicLocationArgument.java
 /Users/vincente/Library/Mobile Documents/com~apple~CloudDocs/workspace/DynamicStudios/Plugins/APIs/DynamicCommands/src/main/java/io/dynamicstudios/commands/command/argument/types/DynamicStringArgument.java

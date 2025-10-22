@@ -1,6 +1,7 @@
 package io.dynamicstudios.commands.command.argument;
 
 import io.dynamicstudios.commands.DynamicCommandManager;
+import io.dynamicstudios.commands.command.argument.types.DynamicLiteral;
 import io.dynamicstudios.commands.command.argument.types.DynamicStringArgument;
 import io.dynamicstudios.commands.exceptions.CommandException;
 import org.bukkit.command.CommandSender;
@@ -35,6 +36,14 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	this.argumentTypes = new LinkedHashMap<>();
 	this.argumentsSpan = new LinkedHashMap<>();
 	for(DynamicArgument<?> argument : arguments) {
+	 if(!(argument instanceof DynamicLiteral))continue;
+	 if(loadArguments(argument, 0, args)) {
+		startingArgument = argument;
+		return;
+	 }
+	}
+	for(DynamicArgument<?> argument : arguments) {
+	 if((argument instanceof DynamicLiteral))continue;
 	 if(loadArguments(argument, 0, args)) {
 		startingArgument = argument;
 		return;
@@ -138,6 +147,11 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	 this.argumentsSpan.put(lName, argSpan);
 	}
 	for(DynamicArgument<?> dynamicArgument : argument.subArguments()) {
+	 if(!(dynamicArgument instanceof DynamicLiteral))continue;
+	 if(loadArguments(dynamicArgument, depth + increase, args)) return true;
+	}
+	for(DynamicArgument<?> dynamicArgument : argument.subArguments()) {
+	 if((dynamicArgument instanceof DynamicLiteral))continue;
 	 if(loadArguments(dynamicArgument, depth + increase, args)) return true;
 	}
 	return true;
@@ -256,7 +270,8 @@ public class DynamicArguments implements Iterable<DynamicArgument<?>> {
 	 }
 	}
 	if(args.length > size) {
-	 throw new CommandException("Too many arguments: '" + String.join(" ", Arrays.copyOfRange(args, args.length - (args.length - size), args.length)) + "', " + args.length + " max: " + size);
+	 throw new CommandException("Too many arguments: '" +
+			String.join(" ", Arrays.copyOfRange(args, args.length - (args.length - size), args.length)) + "', " + args.length + " max: " + size);
 	}
  }
 
